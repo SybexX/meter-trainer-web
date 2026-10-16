@@ -1,9 +1,23 @@
-# trainer-web: train digit models in the browser
+# Meter model trainer
 
-A single HTML page (`trainer.html`, ~410 KB gzipped) that trains the AI-on-the-edge digit
-model in the browser and exports an int8 `.tflite` file the firmware loads. It can be
-served from the device's SD card (`/html/trainer.html.gz`) or opened from disk. There are
-no CDN links, so it works on a network without internet access.
+Train a digit model for **your own meter** in the browser, straight from an
+[AI-on-the-edge-device](https://github.com/jomjol/AI-on-the-edge-device) meter.
+
+A single HTML page (`trainer.html.gz`, ~500 KB) that collects the digit images the device
+saves, labels them, trains the digit model in the browser and installs the int8 `.tflite`
+file the firmware loads. It is served from the device's SD card (`/html/trainer.html.gz`)
+or opened from disk. There are no CDN links, so it works on a network without internet
+access. No firmware changes are needed.
+
+## Install
+
+1. Download `trainer.html.gz` from the [latest release](../../releases/latest).
+2. In the device's file manager, upload it to `/html/`.
+3. Open `http://<device>/trainer.html`. The firmware caches the page for 12 h, so reload
+   hard (Ctrl+F5) after updating it.
+
+Training runs on the GPU (WebGL): use a desktop browser. Collecting needs a few days of
+digit images saved by the device (step 1 sets that up).
 
 ## What the page does (served from the device)
 
@@ -34,16 +48,28 @@ good on the same images.
 
 ## Build
 
+Node 22:
+
 ```bash
-cd tools/trainer-web
-npm install
+npm ci
 npm run build          # -> dist/trainer.html and dist/trainer.html.gz
-DEVICE=http://<device-ip> npx vite preview   # dev: proxies the device API to localhost
+npm run check:i18n     # every English text has a Russian one
+DEVICE=http://<device-ip> npm run dev   # dev server; proxies the device API
 ```
 
-Upload `dist/trainer.html.gz` to `/html/` with the device's file manager, then open
-`http://<device>/trainer.html`. The firmware serves the `.gz` with
-`Content-Encoding: gzip` and caches it for 12 h, so reload hard after updating it.
+The firmware serves `trainer.html.gz` with `Content-Encoding: gzip` when `/trainer.html`
+is requested, so only the `.gz` goes on the card.
+
+## Releases
+
+GitHub Actions builds every push and pull request (artifact `trainer-page`). Pushing a
+tag `v<major>.<minor>.<patch>` builds with that version in the page header and publishes
+a release with `trainer.html.gz` and `trainer.html`:
+
+```bash
+npm version 0.6.0      # sets package.json, commits, tags v0.6.0
+git push --follow-tags
+```
 
 ## Code layout
 
@@ -89,10 +115,10 @@ images/...     crop JPEGs (any size; resized to 20x32 with PIL-style bilinear)
 
 `label` is a digit (`7`) or, for a rolling wheel between two digits, both digits (`7/8`,
 trained as 0.5/0.5). `split` is `train` or `test`; the test crops are only used for
-the results table. To build one from the meter-train pipeline:
+the results table. `scripts/make_dataset_zip.py` packs a dataset prepared elsewhere:
 
 ```bash
-python tools/trainer-web/scripts/make_dataset_zip.py device-logs/train/data8d/dataset_meta.csv dataset.zip
+python scripts/make_dataset_zip.py dataset_meta.csv dataset.zip
 ```
 
 ## Model and export
@@ -106,16 +132,16 @@ python tools/trainer-web/scripts/make_dataset_zip.py device-logs/train/data8d/da
   - Input and output stay float32, like the stock `dig-cont` models (DoubleHyprid10, 10 outputs).
 - **File name:** `dig-cont_<yyyymmddhhmm>_f<filters>_n<images>_q.tflite` (UTC time, first
   conv layer's filters, images trained on), in the slot order of the stock models
-  (`dig-cont_0900_s3_q.tflite`). Example: `dig-cont_202610161419_f24_n19359_q.tflite`;
-  `tools/meter-train/export.py` names its models the same way.
+  (`dig-cont_0900_s3_q.tflite`). Example: `dig-cont_202610161419_f24_n19359_q.tflite`.
 
 ## Checks
 
 ```bash
 # exporter vs the official TFLite converter on the same Keras weights
-tools/meter-train/.venv/Scripts/python tools/trainer-web/scripts/keras_ref.py --data device-logs/train/data8d/dataset.npz --out tools/trainer-web/check-out
-node tools/trainer-web/scripts/export-from-json.mjs tools/trainer-web/check-out
-tools/meter-replay/.venv/Scripts/python tools/trainer-web/scripts/compare_tflite.py tools/trainer-web/check-out
+# (Python with TensorFlow/Keras and ai_edge_litert; dataset.npz format in keras_ref.py)
+python scripts/keras_ref.py --data dataset.npz --out check-out
+node scripts/export-from-json.mjs check-out
+python scripts/compare_tflite.py check-out
 
 # the built page end to end in headless Edge/Chrome (WebGL)
 node scripts/browser-check.mjs check-out/meters-dataset.zip check-out/browser_q.tflite 60

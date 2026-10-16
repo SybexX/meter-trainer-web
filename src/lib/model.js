@@ -1,5 +1,5 @@
 // Digit-wheel model (DoubleHyprid10 head: 10-way softmax with soft targets) and its
-// training loop. Same recipe as tools/meter-train/train.py, with BatchNorm placed before
+// training loop. Same recipe as the Keras reference (scripts/keras_ref.py), with BatchNorm placed before
 // the activation so lib/tflite/export.js can fold it into the convolutions.
 // Functional tf.* ops only: chained tensor methods are not registered in modular tfjs-core.
 import * as tf from "@tensorflow/tfjs-core";

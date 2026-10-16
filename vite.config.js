@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
@@ -9,6 +10,8 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 // For development, DEVICE=http://<device-ip> npm run dev (or vite preview) proxies the
 // device API, so the page behaves as if the device served it.
 const device = process.env.DEVICE;
+// shown in the page header: the release tag's version in CI (APP_VERSION), else package.json
+const version = process.env.APP_VERSION || JSON.parse(readFileSync(new URL("./package.json", import.meta.url))).version;
 // The ESP32's HTTP server rejects large request headers (431, or a reset connection), and a
 // browser on localhost sends the cookies of every other local app: forward only what the
 // device API needs.
@@ -26,7 +29,7 @@ export default defineConfig({
   // @/ = src/ (components and stores; plain modules import relatively so Node scripts can run them)
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   // components use <script setup> only: leave the Options API out of the bundle
-  define: { __VUE_OPTIONS_API__: false, __VUE_PROD_DEVTOOLS__: false, __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false },
+  define: { __APP_VERSION__: JSON.stringify(version), __VUE_OPTIONS_API__: false, __VUE_PROD_DEVTOOLS__: false, __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false },
   server: { proxy },
   preview: { proxy },
   build: {

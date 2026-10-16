@@ -1,7 +1,7 @@
 // Smoke test of the browser pipeline in Node (CPU backend, small subset):
 // dataset zip -> train a few epochs -> export int8 tflite -> dump float predictions so
 // compare_tflite.py can check the export against the trained model.
-//   node tools/trainer-web/scripts/node-check.mjs <dataset.zip> <outdir> [nTrain=1500] [epochs=2]
+//   node scripts/node-check.mjs <dataset.zip> <outdir> [nTrain=1500] [epochs=2]
 import fs from "node:fs";
 import path from "node:path";
 import jpeg from "jpeg-js";

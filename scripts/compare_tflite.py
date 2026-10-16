@@ -3,8 +3,8 @@
 Exporter cross-check, step 3: run Keras float, the official converter's int8 model and the
 JS-exported int8 model on the same test crops; report agreement and accuracy.
 
-  tools/meter-replay/.venv/Scripts/python tools/trainer-web/scripts/compare_tflite.py \
-      tools/trainer-web/check-out [extra.tflite ...]
+Needs ai_edge_litert:
+  python scripts/compare_tflite.py check-out [extra.tflite ...]
 """
 import json
 import os

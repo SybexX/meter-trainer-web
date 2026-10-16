@@ -1,13 +1,14 @@
 {
   "name": "meter-trainer-web",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.5.0",
   "type": "module",
   "description": "Train AI-on-the-edge digit models in the browser; builds to one HTML file served from the device SD card.",
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/gzip.mjs",
-    "check": "node scripts/node-check.mjs"
+    "check": "node scripts/node-check.mjs",
+    "check:i18n": "node scripts/i18n-keys.mjs"
   },
   "dependencies": {
     "@tensorflow/tfjs-backend-cpu": "4.22.0",
@@ -24,5 +25,9 @@
     "puppeteer-core": "^23.10.4",
     "vite": "5.4.11",
     "vite-plugin-singlefile": "2.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alfeg/meter-trainer-web.git"
   }
 }

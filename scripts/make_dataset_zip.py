@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Pack a prepared meter-train dataset (dataset_meta.csv from tools/meter-train/prepare.py)
-into the trainer-web dataset zip:
+Pack a prepared dataset (dataset_meta.csv: path, src, pos, label, split, ts, weight, kind;
+rows with weight 0, no label or kind "hard" are left out) into the trainer-web dataset zip:
   labels.csv   path,src,pos,label,split,ts
   images/NNNNNN.jpg   original crop files
 
-  python tools/trainer-web/scripts/make_dataset_zip.py device-logs/train/data8d/dataset_meta.csv out.zip
+  python scripts/make_dataset_zip.py dataset_meta.csv out.zip
 """
 import csv
 import os

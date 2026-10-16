@@ -19,6 +19,7 @@ import StepNav from "@/components/StepNav.vue";
 
 const SECTIONS = { start: ["sAuto", StartView], setup: ["sSetup", SetupView], collect: ["sCollect", CollectView], labels: ["sLabels", LabelsView], train: ["sTrain", TrainView], install: ["sInstall", InstallView] };
 const otherLang = LANG === "ru" ? "en" : "ru";
+const version = __APP_VERSION__; // set by vite.config.js
 const header = ref(null), nav = ref(null);
 
 function switchLang() {
@@ -60,7 +61,7 @@ onMounted(async () => {
     <header ref="header">
       <h1>{{ t("Meter model trainer") }}<span v-if="app.meterName" id="meterName">{{ app.meterName }}</span></h1>
       <div class="badges">
-        <span id="bDevice">{{ app.deviceText }}</span><span id="bBackend">{{ app.backendText }}</span><span>v0.5</span>
+        <span id="bDevice">{{ app.deviceText }}</span><span id="bBackend">{{ app.backendText }}</span><span>v{{ version }}</span>
         <button type="button" class="link lang" :lang="otherLang" @click="switchLang">{{ LANGS[otherLang] }}</button>
       </div>
     </header>

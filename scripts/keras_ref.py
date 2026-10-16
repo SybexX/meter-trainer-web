@@ -6,9 +6,9 @@ Exporter cross-check, step 1: train the trainer-web architecture in Keras, then 
   <out>/test.npz       test crops + labels for compare_tflite.py
   <out>/tfconv_q.tflite  the same network through the official TFLite converter (int8)
 
-Run with the meter-train venv:
-  tools/meter-train/.venv/Scripts/python tools/trainer-web/scripts/keras_ref.py \
-      --data device-logs/train/data8d/dataset.npz --out tools/trainer-web/check-out --epochs 8
+--data is an .npz with X (N x 32 x 20 x 3, raw RGB), Y (N x 10 soft targets), W (sample
+weight, 0 = unused), split ("train" / "test") and src (source meter). Needs TensorFlow + Keras:
+  python scripts/keras_ref.py --data dataset.npz --out check-out --epochs 8
 """
 import argparse
 import json

@@ -1,6 +1,6 @@
 // Exporter cross-check, step 2: weights.json + calib.json (from keras_ref.py) -> js_q.tflite
 // plus the JS float forward on the test crops for comparison.
-//   node tools/trainer-web/scripts/export-from-json.mjs tools/trainer-web/check-out
+//   node scripts/export-from-json.mjs check-out
 import fs from "node:fs";
 import path from "node:path";
 import { exportTflite } from "../src/lib/tflite/export.js";

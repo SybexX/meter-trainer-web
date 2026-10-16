@@ -1,0 +1,74 @@
+# Builds trainer.html.gz on every push and pull request; a v* tag also publishes a release.
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*.*.*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Translations complete
+        run: npm run check:i18n
+
+      # the page header shows APP_VERSION: the tag's version for a release,
+      # else package.json's version plus the commit
+      - name: Version
+        run: |
+          pkg=$(node -p 'require("./package.json").version')
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            tag="${GITHUB_REF_NAME#v}"
+            if [[ "$tag" != "$pkg" ]]; then
+              echo "::error::tag v$tag does not match package.json version $pkg (use npm version)"
+              exit 1
+            fi
+            echo "APP_VERSION=$tag" >> "$GITHUB_ENV"
+          else
+            echo "APP_VERSION=$pkg-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+          fi
+
+      - run: npm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trainer-page
+          path: |
+            dist/trainer.html.gz
+            dist/trainer.html
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: trainer-page
+          path: dist
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/trainer.html.gz dist/trainer.html \
+            --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes \
+            --notes "Upload trainer.html.gz to /html/ on the device, then open http://<device>/trainer.html (Ctrl+F5 after updating)."
