@@ -1,5 +1,7 @@
 # Meter model trainer
 
+**English** · [Русский](README.ru.md)
+
 Train a digit model for **your own meter** in the browser, straight from an
 [AI-on-the-edge-device](https://github.com/jomjol/AI-on-the-edge-device) meter.
 
@@ -16,8 +18,9 @@ access. No firmware changes are needed.
 3. Open `http://<device>/trainer.html`. The firmware caches the page for 12 h, so reload
    hard (Ctrl+F5) after updating it.
 
-Training runs on the GPU (WebGL): use a desktop browser. Collecting needs a few days of
-digit images saved by the device (step 1 sets that up).
+Training runs on the GPU (WebGL): use a desktop browser. Labelling also works on a phone
+(see "Save to the device" below). Collecting needs a few days of digit images saved by the
+device (step 1 sets that up).
 
 ## What the page does (served from the device)
 
@@ -29,22 +32,29 @@ A wizard: Start (overview, automatic run) and five steps, each reachable at any 
    round (MD5-checked) and the device restarts.
 2. **Collect:** first a scan lists the new `/log/digit/<day>/<hour>/` folders and shows how many images there are to download and how long it takes; then crops go into IndexedDB. The device's
    reading is in each file name; crops are grouped by wheel + reading (digit, between two
-   digits, rejected) and only "images per reading" (default 100) are kept per group,
-   spread over the days. Resumable; finished hours are remembered. A labelled dataset zip
-   can be imported too.
+   digits, rejected) and of each group only the newest "images per reading" (default 100)
+   are downloaded, newest hours first; nothing already collected is deleted. Resumable;
+   finished hours are remembered. A labelled dataset zip can be imported too.
 3. **Labels:** sources are the device reading, steady runs (≥4 identical readings), an AI
    server (Ollama `/api/chat` or OpenAI-compatible `/v1/chat/completions`) and your
    review. Two agreeing sources = confirmed. Only yours and confirmed labels train by
    default. A coverage table and readiness verdict show what is missing. The review grid
-   has keyboard labelling.
+   has keyboard labelling and a touch layout for phones.
 4. **Train:** in a Web Worker (keeps running in a background tab). The test split is the
    newest days. The new model is compared with the installed one on the same test images
-   the device read, and only when there are at least 100 of them.
+   the device read, and only when there are at least 100 of them. The test images the new
+   model got wrong are listed, the surest mistakes first (often a wrong label), and open in
+   the review.
 5. **Install:** uploads the model to `/config/`, switches `[Digits] Model` after a round,
    restarts the device, waits for the first reading; one-click undo.
 
 An **automatic run** does 2–5 in a row and installs only when the new model is at least as
 good on the same images.
+
+**Save to the device / Load from the device** (Collect and Labels steps) keep the whole
+state (images, labels, collected folders) in one file on the SD card,
+`/config/trainer-state.zip`. Load it in another browser, a phone for example, and go on
+labelling there. Loading adds the missing images and keeps the newer label of each image.
 
 ## Build
 
@@ -95,7 +105,7 @@ src/
 
 - Stores: `app.js` holds the open step, the one running task (`runTask`), status lines
   and step pills; `project.js` the crops and labels; then one per step (`setup`,
-  `collect`, `ai`, `review`, `train`, `install`, `auto`, `datasetExport`). Crops and
+  `collect`, `ai`, `review`, `train`, `install`, `auto`, `datasetExport`, `deviceState`). Crops and
   labels are large, so `project.js` keeps them outside Vue's reactivity and bumps a
   `rev` counter when they change.
 - Imports: `@/` (= `src/`) in components and stores; `lib/`, `services/`, `i18n/` and
@@ -153,6 +163,7 @@ ZIP=check-out/meters-dataset.zip node scripts/ui-check.mjs http://localhost:4173
 
 These pages are not a secure context, so:
 - No WebGPU: training uses WebGL.
-- No folder picker: the project lives in browser storage, with zip files to move it.
+- No folder picker: the project lives in browser storage, with zip files or "Save to the
+  device" to move it.
 - No `crypto.subtle`.
 - WebAssembly runs single-threaded, because the firmware sends no COOP/COEP headers.
