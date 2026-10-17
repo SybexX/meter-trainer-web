@@ -26,7 +26,7 @@ async function undo() {
 
 <template>
   <h2>{{ t("Install on the device") }} <StepPill step="install" /></h2>
-  <div class="row">
+  <div class="row install">
     <label class="f" for="fname">{{ t("File name") }} <input id="fname" v-model="install.fname" type="text" class="wide"></label>
     <button id="btnInstall" class="primary" :disabled="!!app.busy || !canInstall()" @click="question = installQuestion(setup.cfg)">{{ t("Install and use this model") }}</button>
     <button id="btnDownload" :disabled="!train.model" @click="download">{{ t("Download .tflite") }}</button>

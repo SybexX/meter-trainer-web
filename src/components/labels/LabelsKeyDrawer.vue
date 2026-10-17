@@ -1,11 +1,12 @@
-<!-- The label keys drawer at the bottom: the selected image large, its sources, and a key per label. -->
+<!-- The label keys drawer at the bottom: the selected image large, its sources, a key per label
+     (a key labels the image and moves on, like the keyboard) and previous / next for touch screens. -->
 <script setup>
-import { computed } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { t } from "@/i18n/index.js";
 import { LABELS } from "@/lib/labels.js";
 import { app } from "@/stores/app.js";
 import { data, rev } from "@/stores/project.js";
-import { review, setHuman } from "@/stores/review.js";
+import { review, setHuman, labelAndNext, moveSel } from "@/stores/review.js";
 import { sourcesText } from "@/utils/format.js";
 import BaseCropImage from "@/components/BaseCropImage.vue";
 
@@ -21,21 +22,39 @@ const info = computed(() => {
 });
 /** The key that is lit: your label, else the shown one; "x" when excluded. */
 const isOn = (l) => (l === "x" ? eff.value.status === "excluded" : (rec.value.human || (eff.value.status !== "excluded" && eff.value.label)) === l);
+
+// the page keeps room under the grid for the drawer, and a selected tile scrolls clear of it
+const el = ref(null);
+const setH = (h) => document.documentElement.style.setProperty("--drawerh", `${Math.ceil(h)}px`);
+const ro = new ResizeObserver(([en]) => {
+  setH(en.target.offsetHeight);
+  document.querySelector('#revGrid [aria-selected="true"]')?.scrollIntoView({ block: "nearest" }); // the drawer may now cover it
+});
+watch(el, (e, old) => { if (old) ro.unobserve(old); if (e) ro.observe(e); else setH(0); });
+onBeforeUnmount(() => { ro.disconnect(); setH(0); });
 </script>
 
 <template>
   <Teleport to="body">
-    <div v-if="crop" id="drawer" class="drawer">
+    <div v-if="crop" id="drawer" ref="el" class="drawer">
       <div class="drawer-in">
         <BaseCropImage :id="crop.id" />
         <div class="drawer-info">
-          <div id="selInfo" class="status">{{ info }}</div>
+          <div class="drawer-top">
+            <div id="selInfo" class="status">{{ info }}</div>
+            <div class="drawer-nav">
+              <button type="button" :aria-label="t('Previous image')" :disabled="review.sel <= 0" @click="moveSel(-1)">‹</button>
+              <span>{{ review.sel + 1 }}/{{ review.list.length }}</span>
+              <button type="button" :aria-label="t('Next image')" :disabled="review.sel >= review.list.length - 1" @click="moveSel(+1)">›</button>
+              <button type="button" :aria-label="t('Close')" @click="review.drawer = false">✕</button>
+            </div>
+          </div>
           <div id="keys" class="keys">
             <template v-for="(l, i) in [...LABELS, 'x']" :key="l">
               <span v-if="i === 10 || i === 20" class="sep"></span>
-              <button type="button" :class="{ on: isOn(l) }" @click="setHuman(crop, l)">{{ l === "x" ? t("X unusable") : l }}</button>
+              <button type="button" :class="{ on: isOn(l), kx: l === 'x' }" @click="labelAndNext(crop, l)">{{ l === "x" ? t("X unusable") : l }}</button>
             </template>
-            <button type="button" :disabled="!rec.human" @click="setHuman(crop, null)">{{ t("Remove my label") }}</button>
+            <button type="button" class="kr" :disabled="!rec.human" @click="setHuman(crop, null)">{{ t("Remove my label") }}</button>
           </div>
         </div>
       </div>

@@ -55,9 +55,9 @@ export async function setLabel(id, fields) {
   });
 }
 
-/** Bulk write whole label records [{id, human?, llm?, ...}] */
-export async function putLabels(records) {
-  await tx("labels", "readwrite", (l) => { for (const r of records) l.put({ ...r, at: Date.now() }); });
+/** Bulk write whole label records [{id, human?, llm?, ...}]; keepAt: keep their own time (a loaded state). */
+export async function putLabels(records, keepAt = false) {
+  await tx("labels", "readwrite", (l) => { for (const r of records) l.put(keepAt ? r : { ...r, at: Date.now() }); });
 }
 
 export const kvGet =(key, dflt = null) => tx("kv", "readonly", (s) => done(s.get(key))).then((v) => v ?? dflt);

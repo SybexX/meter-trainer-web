@@ -7,6 +7,7 @@ import { app, runTask, requestStop } from "@/stores/app.js";
 import { collect, FILES_PER_S, runScan, runDownload, perWheel, importZip, clearAll } from "@/stores/collect.js";
 import { train } from "@/stores/train.js";
 import { exportCsv, exportZip } from "@/stores/datasetExport.js";
+import { saveToDevice, loadFromDevice } from "@/stores/deviceState.js";
 import { fmtTime, num } from "@/utils/format.js";
 import StepPill from "@/components/StepPill.vue";
 import BaseStatusLine from "@/components/BaseStatusLine.vue";
@@ -34,7 +35,7 @@ async function clear() {
 
 <template>
   <h2>{{ t("Collect images") }} <StepPill step="collect" /></h2>
-  <p class="hint">{{ t("Copies the digit images the device saved into this browser. Checking first lists the device’s folders and shows how much there is to download. Images are grouped by wheel and by what the device read (a digit, a position between two digits, or a rejected reading); of each group only “images per reading” are kept, spread over the days. A wheel at rest shows the same digit for days, so most of its images are skipped. The device sends about three images a second.") }}</p>
+  <p class="hint">{{ t("Copies the digit images the device saved into this browser. Checking first lists the device’s folders and shows how much there is to download. Images are grouped by wheel and by what the device read (a digit, a position between two digits, or a rejected reading); of each group only the newest “images per reading” are downloaded, newest first; nothing already here is deleted. A wheel at rest shows the same digit for days, so most of its images are skipped. The device sends about three images a second.") }}</p>
   <div class="row">
     <label class="f" for="days" :data-hint="HINT.daysBack">{{ t("Days back") }} <input id="days" v-model.number="collect.days" type="number" min="1" max="60"></label>
     <label class="f" for="quota" :data-hint="HINT.perReading">{{ t("Images per reading") }} <input id="quota" v-model.number="collect.quota" type="number" min="10" max="2000" step="10"></label>
@@ -72,6 +73,8 @@ async function clear() {
     <input id="fileZip" ref="fileInput" type="file" accept=".zip" hidden @change="onFile">
     <button class="link" type="button" :disabled="!!app.busy" @click="exportZip('collect')">{{ t("Export dataset (zip with images)") }}</button>
     <button class="link" type="button" :disabled="!!app.busy" @click="exportCsv('collect')">{{ t("Export labels (CSV)") }}</button>
+    <button class="link" type="button" :disabled="!!app.busy || !app.onDevice" :data-hint="HINT.deviceState" @click="saveToDevice('collect')">{{ t("Save to the device") }}</button>
+    <button class="link" type="button" :disabled="!!app.busy || !app.onDevice" :data-hint="HINT.deviceState" @click="loadFromDevice('collect')">{{ t("Load from the device") }}</button>
     <button class="link danger" type="button" :disabled="!!app.busy" @click="confirmClear = true">{{ t("Delete all collected data") }}</button>
   </div>
   <div v-if="confirmClear" class="confirm">{{ t("Delete all images, labels and models stored in this browser?") }}

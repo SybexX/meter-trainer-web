@@ -14,17 +14,18 @@ export const FILES_PER_S = 3; // what an ESP32-CAM serves; the measured rate rep
 
 export const collect = reactive({
   days: 7,
-  quota: 100,    // images kept per wheel + device reading
+  quota: 100,    // images kept per wheel + device reading (the newest)
   plan: null,    // result of the last check (scan), until downloaded
   bar: 0,        // progress 0..1
 });
 
 /** Crops already stored per download group (wheel + device reading). */
-function haveByGroup() {
+function cropsByGroup() {
   const m = new Map();
-  for (const c of data.crops) if (c.pred != null) { const g = groupOf(c.roi, c.pred, c.rejected); m.set(g, (m.get(g) || 0) + 1); }
+  for (const c of data.crops) if (c.pred != null) { const g = groupOf(c.roi, c.pred, c.rejected); if (!m.has(g)) m.set(g, []); m.get(g).push(c); }
   return m;
 }
+const haveByGroup = () => new Map([...cropsByGroup()].map(([g, cs]) => [g, cs.map((c) => c.ts)]));
 
 export async function runScan() {
   if (!app.onDevice) { say("collect", t("Collecting needs the page to be opened from the device."), true); return null; }

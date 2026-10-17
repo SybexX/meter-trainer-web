@@ -62,13 +62,19 @@ export function buildTrainSet(crops, eff, { includeUnconfirmed = false, cap = 30
   };
 }
 
+/** The digit with the highest probability in row k of probs. */
+function argmax(probs, k) {
+  let am = 0;
+  for (let c = 1; c < 10; c++) if (probs[k * 10 + c] > probs[k * 10 + am]) am = c;
+  return am;
+}
+
 /** Per wheel: model accuracy vs the device's own reading on the test crops. */
 export function compareOnTest(set, probs) {
   const g = new Map();
   set.testIdx.forEach((r, k) => {
     const m = set.meta[r];
-    let am = 0;
-    for (let c = 1; c < 10; c++) if (probs[k * 10 + c] > probs[k * 10 + am]) am = c;
+    const am = argmax(probs, k);
     const isT = m.label.includes("/");
     const e = g.get(m.roi) || { roi: m.roi, n: 0, model: 0, dev: 0, devN: 0, modelOnDev: 0, t: 0, tModel: 0 };
     e.n++; e.model += set.Y[r * 10 + am] >= 0.5;
@@ -81,4 +87,23 @@ export function compareOnTest(set, probs) {
     g.set(m.roi, e);
   });
   return [...g.values()].sort((a, b) => a.roi.localeCompare(b.roi, undefined, { numeric: true }));
+}
+
+/**
+ * Test crops the model got wrong, the most confident mistakes first: a model that is sure
+ * and still "wrong" often points at a wrong label. guess is the model's answer, as a pair
+ * ("6/7") when the next digit up or down is nearly as likely.
+ */
+export function testErrors(set, probs) {
+  const out = [];
+  set.testIdx.forEach((r, k) => {
+    const am = argmax(probs, k);
+    if (set.Y[r * 10 + am] >= 0.5) return;
+    const p = (c) => probs[k * 10 + ((c + 10) % 10)];
+    const nb = p(am + 1) >= p(am - 1) ? (am + 1) % 10 : (am + 9) % 10;
+    const lo = nb === (am + 1) % 10 ? am : nb;
+    const m = set.meta[r];
+    out.push({ id: m.id, roi: m.roi, label: m.label, p: p(am), guess: p(nb) >= 0.25 ? `${lo}/${(lo + 1) % 10}` : String(am) });
+  });
+  return out.sort((a, b) => b.p - a.p);
 }

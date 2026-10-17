@@ -58,8 +58,8 @@ export const HINT = {
   toReview: t("Images with only one source, or whose sources disagree. Not used for training until you check them."),
   digit: (l) => (l.includes("/") ? t("Usable images where the wheel stands between {a} and {b}.", { a: l.split("/")[0], b: l.split("/")[1] }) : t("Usable images labelled {l}.", { l })),
   // collect plan table
-  toDownload: t("Images chosen for download, spread evenly over the days."),
-  skipped: t("Images left on the device: their reading already has enough images here."),
+  toDownload: t("Images chosen for download: the newest of their reading."),
+  skipped: t("Images left on the device: their reading already has as many newer images here."),
   readingsFull: t("Readings (wheel + what the device read) that reach “images per reading” after this download."),
   readingsShort: t("Readings that still have fewer than “images per reading”, even after this download. More days would help."),
   // compare table (Train)
@@ -70,7 +70,8 @@ export const HINT = {
   newModelBetween: t("Share of those the new model reads as either of the two digits."),
   // settings
   daysBack: t("How many days of the device’s image folders to look at."),
-  perReading: t("Images kept per wheel and device reading (for example dig3 reading 7). A wheel at rest shows the same digit for days, so most of its images are not needed."),
+  deviceState: t("One file on the device's SD card ({file}) with the images and labels of this browser. Save here, load in another browser (a phone, say) and go on labelling there; loading adds what is missing and keeps the newer label of each image.", { file: "/config/trainer-state.zip" }),
+  perReading: t("Images kept per wheel and device reading (for example dig3 reading 7): the newest ones. A wheel at rest shows the same digit for days, so most of its images are not needed."),
   modelSize: t("Bigger models can be a little more accurate but take longer to read each digit on the device."),
   epochs: t("How many times training goes through all images. The page keeps the epoch with the lowest validation loss, so more is safe, only slower."),
   batch: t("Images per training step. Larger is faster on a GPU; the default suits most cases."),

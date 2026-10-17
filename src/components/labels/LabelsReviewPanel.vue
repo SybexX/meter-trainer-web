@@ -6,8 +6,9 @@ import { HINT } from "@/i18n/hints.js";
 import { LABELS } from "@/lib/labels.js";
 import { app } from "@/stores/app.js";
 import { cov, data, rev } from "@/stores/project.js";
-import { review, REV_PAGE, groupInfo, canAccept, acceptRest, gotoGroup, select, filterChanged, showChanged, guidedChanged, onReviewKey } from "@/stores/review.js";
+import { review, REV_PAGE, groupInfo, canAccept, acceptRest, gotoGroup, select, filterChanged, showChanged, guidedChanged, onReviewKey, resetReview } from "@/stores/review.js";
 import { exportCsv, exportZip } from "@/stores/datasetExport.js";
+import { saveToDevice, loadFromDevice } from "@/stores/deviceState.js";
 import BaseStatusLine from "@/components/BaseStatusLine.vue";
 import LabelsReviewTile from "@/components/labels/LabelsReviewTile.vue";
 
@@ -40,34 +41,41 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onReviewKey));
 <template>
   <div class="row opts"><label class="c"><input id="revGuided" v-model="review.guided" type="checkbox" @change="guidedChanged"> {{ t("One wheel and label at a time (groups with nothing to check are skipped)") }}</label></div>
   <div v-if="review.guided" id="revGroupBar" class="groupbar">
-    <button type="button" :disabled="!groupInfo?.groups" @click="gotoGroup(-1)">{{ t("← Previous group") }}</button>
-    <span v-if="'msg' in groupLine">{{ groupLine.msg }}</span>
-    <span v-else><b>{{ groupLine.roi }}</b> · {{ t("shown as") }} <b>{{ groupLine.label }}</b>{{ groupLine.rest }}</span>
+    <button type="button" class="gb-prev" :aria-label="t('Previous group')" :disabled="!groupInfo?.groups" @click="gotoGroup(-1)">←<span class="gb-txt">{{ t("Previous group") }}</span></button>
+    <span v-if="'msg' in groupLine" class="gb-info">{{ groupLine.msg }}</span>
+    <span v-else class="gb-info"><b>{{ groupLine.roi }}</b> · {{ t("shown as") }} <b>{{ groupLine.label }}</b>{{ groupLine.rest }}</span>
     <button id="revAccept" class="primary" type="button" :disabled="!canAccept()" @click="acceptRest">{{ acceptText }}</button>
-    <button type="button" :disabled="!groupInfo?.groups" @click="gotoGroup(+1)">{{ t("Next group →") }}</button>
+    <button type="button" class="gb-next" :aria-label="t('Next group')" :disabled="!groupInfo?.groups" @click="gotoGroup(+1)"><span class="gb-txt">{{ t("Next group") }}</span>→</button>
+  </div>
+  <div v-if="review.custom" id="revCustomBar" class="groupbar">
+    <span class="gb-info"><b>{{ review.custom }}</b></span>
+    <button type="button" @click="resetReview">{{ t("Back to the filters") }}</button>
   </div>
   <BaseStatusLine id="revStatusLine" where="rev" />
 
-  <div class="row">
+  <div class="row filters">
     <label class="f" for="revRoi">{{ t("Wheel") }}
       <select id="revRoi" v-model="review.roi" @change="filterChanged"><option value="">{{ t("All") }}</option><option v-for="r in rois" :key="r">{{ r }}</option></select>
     </label>
     <label class="f" for="revLabel">{{ t("Label") }}
-      <select id="revLabel" v-model="review.label" @change="filterChanged"><option value="">{{ t("Any") }}</option><option v-for="l in LABELS" :key="l">{{ l }}</option></select>
+      <select id="revLabel" v-model="review.label" @change="filterChanged"><option value="">{{ t("All") }}</option><option v-for="l in LABELS" :key="l">{{ l }}</option></select>
     </label>
     <label class="f" for="revStatus" :data-hint="HINT.show">{{ t("Show") }}
       <select id="revStatus" v-model="review.show" @change="showChanged"><option v-for="[v, name] in SHOW" :key="v" :value="v">{{ t(name) }}</option></select>
     </label>
   </div>
-  <p class="hint" v-html="tHtml('reviewKeys', 'Click an image, then: <b>0–9</b> digit · <b>T</b> then a digit for between two digits (T 6 = 6/7) · <b>X</b> unusable · <b>Backspace</b> remove your label · <b>← →</b> move · <b>Enter</b> accept the shown label. Group by group: fix the wrong ones, then <b>A</b> approves all the others as shown and moves on · <b>[ ]</b> previous / next group.')"></p>
+  <p class="hint touch-only">{{ t("Tap an image, then its label: the next image opens. Approve all takes the rest of the group as shown and moves on.") }}</p>
+  <p class="hint kbd-only" v-html="tHtml('reviewKeys', 'Click an image, then: <b>0–9</b> digit · <b>T</b> then a digit for between two digits (T 6 = 6/7) · <b>X</b> unusable · <b>Backspace</b> remove your label · <b>← →</b> move · <b>Enter</b> accept the shown label. Group by group: fix the wrong ones, then <b>A</b> approves all the others as shown and moves on · <b>[ ]</b> previous / next group.')"></p>
 
   <div id="revGrid" ref="grid" class="grid" role="listbox" :aria-label="t('Images to review')">
     <p v-if="!review.list.length" class="hint">{{ t("Nothing to show here.") }}</p>
-    <LabelsReviewTile v-for="(c, k) in shown" :key="c.id" :data-k="k" :crop="c" :eff="effFor(c)" :selected="k === review.sel" @click="select(k)" />
+    <LabelsReviewTile v-for="(c, k) in shown" :key="c.id" :data-k="k" :crop="c" :eff="effFor(c)" :selected="k === review.sel" :show-roi="!review.guided" @click="select(k)" />
   </div>
   <div class="row"><button v-if="review.shown < review.list.length" id="revMore" @click="review.shown += REV_PAGE">{{ t("Show more ({n} left)", { n: review.list.length - review.shown }) }}</button></div>
   <div class="more">
     <button class="link" type="button" :disabled="!!app.busy" @click="exportZip('rev')">{{ t("Export dataset (zip with images)") }}</button>
     <button class="link" type="button" :disabled="!!app.busy" @click="exportCsv('rev')">{{ t("Export labels (CSV)") }}</button>
+    <button class="link" type="button" :disabled="!!app.busy || !app.onDevice" :data-hint="HINT.deviceState" @click="saveToDevice('rev')">{{ t("Save to the device") }}</button>
+    <button class="link" type="button" :disabled="!!app.busy || !app.onDevice" :data-hint="HINT.deviceState" @click="loadFromDevice('rev')">{{ t("Load from the device") }}</button>
   </div>
 </template>

@@ -17,6 +17,7 @@ export const review = reactive({
   sel: -1,                              // index of the selected crop in list
   drawer: false,                        // label keys drawer open
   tPending: false,                      // "T" pressed: the next digit means "between"
+  custom: "",                           // a given list is shown, not the filters' (its title)
 });
 
 function matchesShow(show, e) {
@@ -73,7 +74,13 @@ export function resetReview() {
     review.list = markRaw(review.groupKey ? [...m.get(review.groupKey)].sort((a, b) => (a.ts < b.ts ? -1 : 1)) : []);
   } else review.list = markRaw(reviewList());
   review.shown = review.guided ? review.list.length : REV_PAGE;
-  review.sel = -1; review.drawer = false;
+  review.sel = -1; review.drawer = false; review.custom = "";
+}
+
+/** Review the given crops (e.g. the new model's mistakes) instead of the filters' list; selects k. */
+export function openCrops(list, title, k = -1) {
+  Object.assign(review, { guided: false, groupKey: null, roi: "", label: "", custom: title, list: markRaw([...list]), shown: list.length, sel: -1, drawer: false });
+  if (k >= 0) select(k);
 }
 watch(loads, resetReview);
 
@@ -160,18 +167,20 @@ export function onReviewKey(e) {
   }
   if (!review.drawer) return;
   const c = review.list[review.sel];
-  const step = (d) => select(Math.max(0, Math.min(review.list.length - 1, review.sel + d)));
-  const next = () => setTimeout(() => step(+1), 80);
-  if (k === "ArrowRight" || k === "ArrowDown") { e.preventDefault(); step(+1); return; }
-  if (k === "ArrowLeft" || k === "ArrowUp") { e.preventDefault(); step(-1); return; }
+  if (k === "ArrowRight" || k === "ArrowDown") { e.preventDefault(); moveSel(+1); return; }
+  if (k === "ArrowLeft" || k === "ArrowUp") { e.preventDefault(); moveSel(-1); return; }
   if (!c) return;
   if (k === "Escape") { review.drawer = false; return; }
   if (k === "t" || k === "T") { review.tPending = true; return; }
-  if (/^[0-9]$/.test(k)) { e.preventDefault(); const l = review.tPending ? `${k}/${(+k + 1) % 10}` : k; review.tPending = false; setHuman(c, l).then(next); return; }
-  if (k === "x" || k === "X") { setHuman(c, "x").then(next); return; }
-  if (k === "Enter") { const lab = data.eff.get(c.id).label; if (lab) setHuman(c, lab).then(next); return; }
+  if (/^[0-9]$/.test(k)) { e.preventDefault(); const l = review.tPending ? `${k}/${(+k + 1) % 10}` : k; review.tPending = false; labelAndNext(c, l); return; }
+  if (k === "x" || k === "X") { labelAndNext(c, "x"); return; }
+  if (k === "Enter") { const lab = data.eff.get(c.id).label; if (lab) labelAndNext(c, lab); return; }
   if (k === "Backspace") { e.preventDefault(); setHuman(c, null); }
 }
+/** Select the crop d places from the selected one (clamped to the list). */
+export const moveSel = (d) => select(Math.max(0, Math.min(review.list.length - 1, review.sel + d)));
+/** Your label for a crop, then on to the next one (keys and the drawer's buttons alike). */
+export const labelAndNext = (c, l) => setHuman(c, l).then(() => setTimeout(() => moveSel(+1), 80));
 export const canAccept = () => {
   const g = groupInfo.value;
   return !!g && !!g.left && !!g.label && g.label !== "?";

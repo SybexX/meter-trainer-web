@@ -8,6 +8,7 @@ defineProps({
   crop: { type: Object, required: true },
   eff: { type: Object, required: true },     // effective label: { label, status, sources }
   selected: { type: Boolean, default: false },
+  showRoi: { type: Boolean, default: true },  // off in guided review: every tile is the same wheel
 });
 </script>
 
@@ -15,6 +16,6 @@ defineProps({
   <button type="button" class="tile" :class="`st-${eff.status}`" :data-hint="statusHint[eff.status] || ''" :aria-selected="selected ? 'true' : 'false'">
     <BaseCropImage :id="crop.id" lazy />
     <span class="l">{{ eff.status === "excluded" ? "x" : (eff.label ?? "?") }}</span>
-    <span class="s">{{ crop.roi }} · {{ sourcesText(eff.sources) }}</span>
+    <span class="s"><template v-if="showRoi">{{ crop.roi }} · </template>{{ sourcesText(eff.sources) }}</span>
   </button>
 </template>

@@ -11,6 +11,7 @@ import BaseStatusLine from "@/components/BaseStatusLine.vue";
 import BaseProgressBar from "@/components/BaseProgressBar.vue";
 import TrainLossChart from "@/components/train/TrainLossChart.vue";
 import TrainCompareTable from "@/components/train/TrainCompareTable.vue";
+import TrainErrors from "@/components/train/TrainErrors.vue";
 
 const SIZES = [
   ["24,48,48|128,64", N_("Small · {m} M ops/digit")],
@@ -47,4 +48,5 @@ const start = () => runTask("training", "train", runTrain, (err) => t("Training 
   <BaseStatusLine id="trainStatus" where="train" />
   <TrainLossChart />
   <TrainCompareTable />
+  <TrainErrors />
 </template>

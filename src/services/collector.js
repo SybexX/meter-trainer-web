@@ -4,8 +4,9 @@
 // pred >= 100 marks a reading below CNNGoodThreshold (actual value pred - 100).
 // The ESP32 serves ~3 files/s, so not every crop is fetched. The device's reading in the
 // file name sorts each crop into a group (wheel + digit, or wheel + "between 7 and 8", or
-// wheel + rejected); per group only `quota` crops are kept in total, spread evenly over
-// time. A wheel at rest shows the same digit for days, so most of its crops are skipped.
+// wheel + rejected); per group only crops among its newest `quota` are fetched (newest
+// hours first), so the set follows the meter as it looks now; nothing stored is deleted.
+// A wheel at rest shows the same digit for days, so most of its crops are skipped.
 import { list, getBytes } from "./device.js";
 import { hasCrop, putCrops, kvGet, kvSet } from "./db.js";
 import { decodeBrowser, IN_W, IN_H } from "../lib/dataset.js";
@@ -49,19 +50,10 @@ async function cachedList(path, keep) {
 
 export const groupOf = (roi, pred, rejected) => `${roi}|${rejected ? "rejected" : predLabel(pred)}`;
 
-/** Evenly spaced pick of n items (sorted by ts). */
-function spread(items, n) {
-  if (n >= items.length) return items;
-  if (n <= 0) return [];
-  const out = [], step = items.length / n;
-  for (let i = 0; i < n; i++) out.push(items[Math.floor(i * step + step / 2)]);
-  return out;
-}
-
 /**
  * Step 1 of collecting: list the hour folders not collected yet (one small request each)
  * and decide what to download. Nothing is downloaded here.
- * have: Map group -> crops already stored. quota: crops wanted per group.
+ * have: Map group -> timestamps of the crops already stored. quota: crops kept per group (the newest).
  * -> {hours, onDevice, toFetch, skippedEnough, have, groups: Map group -> {have, picked, available}}
  */
 export async function scan({ days = 7, quota = 150, have = new Map(), shouldStop = () => false, onProgress = () => {} } = {}) {
@@ -105,9 +97,10 @@ export async function scan({ days = 7, quota = 150, have = new Map(), shouldStop
   }
   const byHour = new Map(plan.hours.map((h) => [h.key, h]));
   for (const [g, items] of cand) {
-    items.sort((a, b) => (a.ts < b.ts ? -1 : 1));
-    const already = have.get(g) || 0;
-    const pick = spread(items, Math.max(0, quota - already));
+    // the newest `quota` of stored + new: the new ones in that window are fetched
+    const stored = have.get(g) || [], already = stored.length;
+    const newest = [...stored.map((ts) => ({ ts })), ...items].sort((a, b) => (a.ts < b.ts ? 1 : -1)).slice(0, quota);
+    const pick = newest.filter((it) => it.id);
     pick.forEach((it) => byHour.get(it.hour).items.push(it));
     plan.toFetch += pick.length;
     plan.skippedEnough += items.length - pick.length;

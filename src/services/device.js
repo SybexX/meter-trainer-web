@@ -72,9 +72,9 @@ async function del(path) {
 }
 
 /** Upload bytes to an SD path ("/config/x.tflite"), replacing an existing file; verified by MD5. */
-export async function upload(path, bytes) {
+export async function upload(path, bytes, timeoutMs = 120000) {
   await del(path);
-  const r = await queued(() => req(`/upload${path}?md5`, { method: "POST", body: bytes }, 120000));
+  const r = await queued(() => req(`/upload${path}?md5`, { method: "POST", body: bytes }, timeoutMs));
   const got = (await r.json()).md5;
   const want = md5(bytes);
   if (got !== want) throw new Error(t("upload of {path} corrupted (device MD5 {got}, expected {want})", { path, got, want }));
