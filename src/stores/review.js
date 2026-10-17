@@ -126,11 +126,13 @@ export function select(k) {
 }
 
 /** Your label for a crop: a label, "x" (unusable) or null (remove yours). */
+let nextGroupTimer = 0;
 export async function setHuman(c, l) {
   await setLabelFields(c, { human: l });
   if (review.guided && l !== null && !review.list.some(stillOpen)) {
     say("rev", t("{group} done.", { group: review.groupKey.replace("|", " · ") }));
-    setTimeout(() => gotoGroup(+1), 500);
+    clearTimeout(nextGroupTimer); // one more key in the meantime must not skip a group
+    nextGroupTimer = setTimeout(() => gotoGroup(+1), 500);
   }
 }
 
@@ -174,7 +176,8 @@ export function onReviewKey(e) {
   if (k === "t" || k === "T") { review.tPending = true; return; }
   if (/^[0-9]$/.test(k)) { e.preventDefault(); const l = review.tPending ? `${k}/${(+k + 1) % 10}` : k; review.tPending = false; labelAndNext(c, l); return; }
   if (k === "x" || k === "X") { labelAndNext(c, "x"); return; }
-  if (k === "Enter") { const lab = data.eff.get(c.id).label; if (lab) labelAndNext(c, lab); return; }
+  // Enter would also "click" the focused tile (the one clicked first) and pull the selection back to it
+  if (k === "Enter") { e.preventDefault(); const lab = data.eff.get(c.id).label; if (lab) labelAndNext(c, lab); return; }
   if (k === "Backspace") { e.preventDefault(); setHuman(c, null); }
 }
 /** Select the crop d places from the selected one (clamped to the list). */
