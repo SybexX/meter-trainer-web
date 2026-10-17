@@ -3,8 +3,8 @@
 // with: node scripts/i18n-keys.mjs
 export default {
   // ---- page, steps, header
-  "Meter Model Trainer": "Обучение модели счётчика",
-  "Meter model trainer": "Обучение модели счётчика",
+  "Meter Model Trainer": "Тренер счётчика",
+  "Meter model trainer": "Тренер счётчика",
   "Steps": "Шаги",
   "Start": "Начало",
   "Device": "Устройство",
