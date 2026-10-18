@@ -5,6 +5,7 @@ import { LABELS } from "@/lib/labels.js";
 import { t } from "@/i18n/index.js";
 import { app, say } from "@/stores/app.js";
 import { data, rev, loads, applyLabels, setLabelFields, usableSt, reviewSt } from "@/stores/project.js";
+import { trainedIds } from "@/stores/train.js";
 
 export const REV_PAGE = 96; // tiles per "Show more" when not guided
 
@@ -20,8 +21,10 @@ export const review = reactive({
   custom: "",                           // a given list is shown, not the filters' (its title)
 });
 
-function matchesShow(show, e) {
+function matchesShow(show, e, c) {
   if (show === "usable") return usableSt(e.status);
+  if (show === "trained") return trainedIds.value.has(c.id);
+  if (show === "untrained") return usableSt(e.status) && !trainedIds.value.has(c.id);
   if (show === "unapproved") return e.status !== "human" && e.status !== "excluded" && !!e.label;
   if (show === "review") return reviewSt(e.status);
   if (show === "conflict") return e.status === "conflict";
@@ -34,7 +37,7 @@ function reviewList(useFilters = true) {
     if (roi && c.roi !== roi) return false;
     const e = data.eff.get(c.id);
     if (lab && e.label !== lab) return false;
-    return matchesShow(review.show, e);
+    return matchesShow(review.show, e, c);
   }).sort((a, b) => data.eff.get(a.id).score - data.eff.get(b.id).score || (a.ts < b.ts ? 1 : -1));
 }
 

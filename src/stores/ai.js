@@ -4,6 +4,7 @@ import * as llm from "@/services/llm.js";
 import * as store from "@/services/db.js";
 import { groupOf } from "@/services/collector.js";
 import { MIN_PER_DIGIT } from "@/lib/readiness.js";
+import { rollingRate } from "@/utils/rate.js";
 import { t } from "@/i18n/index.js";
 import { app, say } from "@/stores/app.js";
 import { data, refreshProject, setLabelFields } from "@/stores/project.js";
@@ -95,7 +96,8 @@ export async function runLlm(limit) {
   const q = llmQueue(limit);
   if (!q.length) { say("llm", t("Nothing left to ask about.")); return; }
   say("llm", t("Asking about {n} images from {w} wheels and {g} different readings…", { n: q.length, w: q.wheels, g: q.groups }));
-  const t0 = performance.now();
+  const speed = rollingRate(60000); // answers take seconds each: a longer window
+  speed.mark(0);
   let done = 0, failed = 0;
   for (const c of q) {
     if (app.stop) break;
@@ -107,7 +109,8 @@ export async function runLlm(limit) {
       failed++;
       if (failed >= 3 && done === 0) throw e;
     }
-    const per = (performance.now() - t0) / 1000 / (done + failed);
+    speed.mark(done + failed);
+    const per = 1 / Math.max(1e-6, speed.rate());
     say("llm", t("{i} of {n} labelled", { i: done, n: q.length }) + (failed ? t(", {n} failed", { n: failed }) : "") +
       t(", {s} s each, about {m} min left", { s: per.toFixed(1), m: Math.ceil(((q.length - done - failed) * per) / 60) }));
     app.progress = t("AI labels {i}/{n}", { i: done, n: q.length });

@@ -1,6 +1,6 @@
 // Step 4: training in the Web Worker (workers/train.worker.js keeps going in a background tab),
 // then the comparison with the installed model and the int8 export.
-import { markRaw, reactive } from "vue";
+import { computed, markRaw, reactive } from "vue";
 import * as store from "@/services/db.js";
 import { buildTrainSet, compareOnTest, testErrors } from "@/lib/trainset.js";
 import { MIN_COMPARE } from "@/lib/readiness.js";
@@ -8,6 +8,7 @@ import { t, N_ } from "@/i18n/index.js";
 import { app, say, setPill, onStop } from "@/stores/app.js";
 import { data } from "@/stores/project.js";
 import { num, parseSize } from "@/utils/format.js";
+import { rollingRate } from "@/utils/rate.js";
 import TrainWorker from "@/workers/train.worker.js?worker&inline";
 
 export const train = reactive({
@@ -20,16 +21,26 @@ export const train = reactive({
   compare: null,      // per wheel: { roi, n, model, dev, devN, modelOnDev, t, tModel }
   errors: null,       // test images the comparison model got wrong: { id, roi, label, guess, p }, surest first
   testN: 0,           // test images behind compare and errors
-  model: null,        // { name, bytes, at, acc, compareN, final, trainN, accOnDev, devAcc }
+  model: null,        // { name, bytes, at, acc, compareN, final, trainN, accOnDev, devAcc, trainIds, testIds }
 });
+
+/** Ids of the images the last model learned from (its near-duplicates and the test images left out). */
+export const trainedIds = computed(() => new Set(train.model?.trainIds || []));
+/** Rows of a train set the model learns from (validation included): their crop ids. */
+const idsOf = (set) => set.meta.slice(0, set.unique).map((m) => m.id);
 
 // ---------------------------------------------------------------- worker messages
 const worker = new TrainWorker();
 const waiters = {};
 const once = (type) => new Promise((res, rej) => { waiters[type] = { res, rej }; });
 let phase = { n: 0, of: 1, label: "" }; // training runs once or twice (comparison, then final)
+let speed = rollingRate(30000), steps = 1; // training steps per second, for the time left
+/** Steps done over both phases, after `epochs` epochs and `step` steps of the current phase. */
+const stepsDone = (epochs, step) => (phase.n * train.chartEpochs + epochs) * steps + step;
 worker.onmessage = ({ data: m }) => {
   if (m.type === "progress") {
+    steps = m.steps;
+    speed.mark(stepsDone(m.epoch, m.step));
     const frac = (phase.n + (m.epoch + m.step / m.steps) / train.chartEpochs) / phase.of;
     train.bar = frac; app.progress = t("{p}% training", { p: Math.round(frac * 100) });
   } else if (m.type === "epoch") onEpoch(m);
@@ -50,9 +61,11 @@ export async function initWorker() {
 
 function onEpoch(e) {
   train.history.push(e);
+  speed.mark(stepsDone(e.epoch + 1, 0));
+  const left = speed.left(phase.of * e.epochs * steps - stepsDone(e.epoch + 1, 0)) ?? e.seconds * (e.epochs - e.epoch - 1);
   say("train", phase.label + t("Epoch {i}/{n}  loss {l}  validation loss {vl}  validation accuracy {va}%  {s} s/epoch  about {m} min left", {
     i: e.epoch + 1, n: e.epochs, l: e.loss.toFixed(3), vl: e.valLoss.toFixed(3), va: (e.valAcc * 100).toFixed(1), s: e.seconds.toFixed(1),
-    m: Math.ceil((((e.epochs - e.epoch - 1) + (phase.of - phase.n - 1) * e.epochs) * e.seconds) / 60) }));
+    m: Math.ceil(left / 60) }));
 }
 
 /** Trains one model in the worker on the given set; resolves with the worker's "trained" message. */
@@ -60,6 +73,7 @@ function trainOnce(set, filters, dense, epochs) {
   worker.postMessage({ type: "data", X: set.X, Y: set.Y.slice() }, [set.X.buffer]);
   const done = once("trained");
   train.history = [];
+  speed = rollingRate(30000); // anew per phase: its steps per epoch differ
   worker.postMessage({ type: "train", filters, dense, epochs, batch: train.batch || 64, lr: train.lr || 1e-3,
     trainIdx: set.trainIdx, valIdx: set.valIdx, testIdx: set.testIdx });
   return done;
@@ -78,14 +92,14 @@ export async function runTrain() {
   say("train", phase.label + t("training on {n} different images ({d} near-duplicates left out), testing on {m} from each wheel’s newest days…", { n: num(set.unique), d: num(set.dupes), m: num(set.testIdx.length) }));
   const res = await trainOnce(set, filters, dense, epochs);
   const compare = compareOnTest(set, res.probs), errors = testErrors(set, res.probs);
-  let calib = set.trainIdx.slice(0, 300), kept = res.bestEpoch, trainN = set.unique;
+  let calib = set.trainIdx.slice(0, 300), kept = res.bestEpoch, trainN = set.unique, trainIds = idsOf(set);
   // 2. the model to install: the same recipe on every usable image, the test images included
   if (final && !app.stop) {
     const all = buildTrainSet(data.crops, data.eff, { includeUnconfirmed, all: true });
     phase = { ...phase, n: 1, label: t("Step 2 of 2 (final model, all images): ") };
     say("train", phase.label + t("training on {n} different images ({d} near-duplicates left out)…", { n: num(all.unique), d: num(all.dupes) }));
     const res2 = await trainOnce(all, filters, dense, epochs);
-    calib = all.trainIdx.slice(0, 300); kept = res2.bestEpoch; trainN = all.unique;
+    calib = all.trainIdx.slice(0, 300); kept = res2.bestEpoch; trainN = all.unique; trainIds = idsOf(all);
   }
   train.bar = 1;
   // export right away (calibration on 300 training images of the set the worker holds now)
@@ -100,7 +114,8 @@ export async function runTrain() {
   // compare with the installed model on the same images, and only with enough of them
   const fair = tot.dn >= MIN_COMPARE;
   const model = { name, bytes, at: Date.now(), acc: tot.n ? tot.m / tot.n : null, compareN: tot.dn, final: final && !app.stop, trainN,
-    accOnDev: fair ? tot.md / tot.dn : null, devAcc: fair ? tot.d / tot.dn : null };
+    accOnDev: fair ? tot.md / tot.dn : null, devAcc: fair ? tot.d / tot.dn : null,
+    trainIds, testIds: set.testIdx.map((i) => set.meta[i].id) };
   await store.kvSet("lastModel", model);
   train.compare = markRaw(compare);
   train.errors = markRaw(errors); train.testN = set.testIdx.length;

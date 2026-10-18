@@ -252,8 +252,6 @@ export default {
   "Save to the device": "Сохранить на устройство",
   "Load from the device": "Загрузить с устройства",
   "Nothing to save yet.": "Пока нечего сохранять.",
-  "Uploading {mb} MB to the device…": "Отправка {mb} МБ на устройство…",
-  "Saved {n} images and their labels on the device ({file}, {mb} MB). Load it in another browser with “Load from the device”.": "На устройстве сохранено {n} изображений с метками ({file}, {mb} МБ). В другом браузере откройте их кнопкой «Загрузить с устройства».",
   "Saving failed: {err}": "Не удалось сохранить: {err}",
   "Downloading the saved state…": "Загрузка сохранённого состояния…",
   "nothing saved on the device yet": "на устройстве ещё ничего не сохранено",
@@ -262,7 +260,6 @@ export default {
   "Added {i} of {n} images…": "Добавлено {i} из {n} изображений…",
   "Loaded the state saved {when}: {a} images added, {l} labels updated.": "Загружено состояние от {when}: добавлено изображений {a}, обновлено меток {l}.",
   "Loading failed: {err}": "Не удалось загрузить: {err}",
-  "One file on the device's SD card ({file}) with the images and labels of this browser. Save here, load in another browser (a phone, say) and go on labelling there; loading adds what is missing and keeps the newer label of each image.": "Один файл на SD-карте устройства ({file}) с изображениями и метками этого браузера. Сохраните здесь, загрузите в другом браузере (например, на телефоне) и продолжайте разметку там; при загрузке добавляется недостающее, а для каждого изображения остаётся более новая метка.",
   "Where the new model was wrong": "Где новая модель ошиблась",
   "The new model read all {n} test images right.": "Новая модель верно прочитала все {n} тестовых изображений.",
   "{n} of {m} test images. The surest mistakes come first: there the label itself is often wrong. Click an image to check its label in the review.": "{n} из {m} тестовых изображений. Сначала самые уверенные ошибки: в них часто неверна сама метка. Нажмите на изображение, чтобы проверить его метку в разметке.",
@@ -421,12 +418,52 @@ export default {
   "The comparison needs a model that has not seen the test images. The model you install does not: training it again on all images uses the newest days too, which matters most for a wheel added recently.":
     "Для сравнения нужна модель, не видевшая тестовых изображений. Устанавливаемой это не нужно: повторное обучение на всех изображениях использует и последние дни, что особенно важно для недавно добавленного барабана.",
   "How many images to send to the AI server this time. They are spread over all wheels and readings.": "Сколько изображений отправить на ИИ-сервер в этот раз. Они распределяются по всем барабанам и значениям.",
-  "Needs review: one source, or sources disagree. Disagreements: the device and the AI read different digits. Not approved by you: everything you have not labelled yourself. Usable: what training uses. Labelled by you: your own labels.":
-    "Нужна проверка: один источник или источники расходятся. Расхождения: устройство и ИИ прочитали разные цифры. Не подтверждённые вами: всё, что вы не размечали сами. Пригодные: то, что идёт в обучение. Размеченные вами: ваши метки.",
   "Labelled by you. Used for training.": "Размечено вами. Используется для обучения.",
   "Two sources agree. Used for training.": "Два источника согласны. Используется для обучения.",
   "Only one source. Not used for training until you approve it.": "Только один источник. Не используется для обучения, пока вы его не примете.",
   "The sources disagree. Pick the right digit.": "Источники расходятся. Выберите верную цифру.",
   "Marked unusable by you. Left out of training.": "Отмечено вами как непригодное. Исключено из обучения.",
   "No label yet.": "Метки пока нет.",
+  "Download with its images (zip)":
+    "Скачать с изображениями (zip)",
+  "Downloading part {i} of {n}…":
+    "Загрузка части {i} из {n}…",
+  "Exported the model with {n} images ({mb} MB). Unpack it and open index.html to see them all.":
+    "Модель выгружена с изображениями: {n} ({mb} МБ). Распакуйте архив и откройте index.html, чтобы увидеть их все.",
+  "Files on the device's SD card ({file} and its parts of up to 7 MB) with the images and labels of this browser. Save here, load in another browser (a phone, say) and go on labelling there; loading adds what is missing and keeps the newer label of each image.":
+    "Файлы на SD-карте устройства ({file} и его части до 7 МБ) с изображениями и метками этого браузера. Сохраните здесь, загрузите в другом браузере (например, на телефоне) и продолжайте разметку там; при загрузке добавляется недостающее, а для каждого изображения остаётся более новая метка.",
+  "Needs review: one source, or sources disagree. Disagreements: the device and the AI read different digits. Not approved by you: everything you have not labelled yourself. Usable: what training can use. Used for training (●): the images the last model learned from. Usable, not used for training: left out as near-duplicates or over the limit per wheel and label, or labelled after that training. Labelled by you: your own labels.":
+    "Нужна проверка: один источник или источники расходятся. Расхождения: устройство и ИИ прочитали разные цифры. Не подтверждённые вами: всё, что вы не размечали сами. Пригодные: то, что может идти в обучение. Использованы в обучении (●): изображения, на которых училась последняя модель. Пригодные, не использованные в обучении: пропущены как почти одинаковые или сверх лимита на барабан и метку, либо размечены после того обучения. Размеченные вами: ваши метки.",
+  "Outlined: the test images (each wheel’s newest days), not learned from, used to compare with the installed model.":
+    "В рамке: тестовые изображения (последние дни каждого барабана); модель на них не училась, по ним она сравнивалась с установленной.",
+  "Outlined: the test images (each wheel’s newest days). The comparison model did not see them; this final model learned from them too.":
+    "В рамке: тестовые изображения (последние дни каждого барабана). Модель для сравнения их не видела; эта итоговая модель училась и на них.",
+  "Saved {n} images and their labels on the device ({mb} MB in {p} files: {file} and its parts). Load it in another browser with “Load from the device”.":
+    "На устройстве сохранено {n} изображений с метками ({mb} МБ в файлах: {p} — {file} и его части). В другом браузере откройте их кнопкой «Загрузить с устройства».",
+  "The model with the images it learned from and the test images: labels.csv, model.json and index.html, one page showing every image by wheel and label. Unpack the zip and open index.html.":
+    "Модель с изображениями, на которых она училась, и тестовыми: labels.csv, model.json и index.html — одна страница со всеми изображениями по барабанам и меткам. Распакуйте архив и откройте index.html.",
+  "Train a model first: the images it learned from are known only for models trained with this version.":
+    "Сначала обучите модель: изображения, на которых она училась, известны только для моделей, обученных этой версией.",
+  "Trained {date}":
+    "Обучена {date}",
+  "Uploading part {i} of {n} ({mb} MB)…":
+    "Отправка части {i} из {n} ({mb} МБ)…",
+  "Usable, not used for training":
+    "Пригодные, не использованные в обучении",
+  "Used for training":
+    "Использованы в обучении",
+  "Used to train the last model":
+    "Использовано при обучении последней модели",
+  "accuracy on the test images {p}%":
+    "точность на тестовых изображениях {p}%",
+  "stopped; the state saved before is unchanged":
+    "остановлено; сохранённое ранее состояние не изменилось",
+  "{n} images deleted since training are missing.":
+    "Нет изображений, удалённых после обучения: {n}.",
+  "{n} images the model learned from.":
+    "Изображений, на которых училась модель: {n}.",
+  "By label":
+    "По меткам",
+  "By wheel and label":
+    "По барабанам и меткам",
 };

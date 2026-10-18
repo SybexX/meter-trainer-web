@@ -6,13 +6,14 @@ import { HINT } from "@/i18n/hints.js";
 import { LABELS } from "@/lib/labels.js";
 import { app } from "@/stores/app.js";
 import { cov, data, rev } from "@/stores/project.js";
+import { trainedIds } from "@/stores/train.js";
 import { review, REV_PAGE, groupInfo, canAccept, acceptRest, gotoGroup, select, filterChanged, showChanged, guidedChanged, onReviewKey, resetReview } from "@/stores/review.js";
 import { exportCsv, exportZip } from "@/stores/datasetExport.js";
 import { saveToDevice, loadFromDevice } from "@/stores/deviceState.js";
 import BaseStatusLine from "@/components/BaseStatusLine.vue";
 import LabelsReviewTile from "@/components/labels/LabelsReviewTile.vue";
 
-const SHOW = [["review", N_("Needs review")], ["conflict", N_("Disagreements")], ["unapproved", N_("Not approved by you")], ["usable", N_("Usable")], ["human", N_("Labelled by you")], ["all", N_("All")]];
+const SHOW = [["review", N_("Needs review")], ["conflict", N_("Disagreements")], ["unapproved", N_("Not approved by you")], ["usable", N_("Usable")], ["trained", N_("Used for training")], ["untrained", N_("Usable, not used for training")], ["human", N_("Labelled by you")], ["all", N_("All")]];
 const rois = computed(() => cov.value.rois.map((r) => r.roi));
 const shown = computed(() => review.list.slice(0, review.shown));
 /** Effective label of a crop; reading rev re-renders the grid when labels change. */
@@ -69,7 +70,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onReviewKey));
 
   <div id="revGrid" ref="grid" class="grid" role="listbox" :aria-label="t('Images to review')">
     <p v-if="!review.list.length" class="hint">{{ t("Nothing to show here.") }}</p>
-    <LabelsReviewTile v-for="(c, k) in shown" :key="c.id" :data-k="k" :crop="c" :eff="effFor(c)" :selected="k === review.sel" :show-roi="!review.guided" @click="select(k)" />
+    <LabelsReviewTile v-for="(c, k) in shown" :key="c.id" :data-k="k" :crop="c" :eff="effFor(c)" :selected="k === review.sel" :show-roi="!review.guided" :trained="trainedIds.has(c.id)" @click="select(k)" />
   </div>
   <div class="row"><button v-if="review.shown < review.list.length" id="revMore" @click="review.shown += REV_PAGE">{{ t("Show more ({n} left)", { n: review.list.length - review.shown }) }}</button></div>
   <div class="more">

@@ -67,13 +67,14 @@ export const readConfig = () => getText("/fileserver/config/config.ini");
 export const statusFlow = async () => (await getText("/statusflow", 10000)).trim();
 export const readValue = async () => JSON.parse(await getText("/json", 10000));
 
-async function del(path) {
+/** Delete an SD file ("/config/x"); a missing one is fine. */
+export async function remove(path) {
   try { await queued(() => req(`/delete${path}`, { method: "POST" })); } catch (e) { if (e.status !== 404) throw e; }
 }
 
 /** Upload bytes to an SD path ("/config/x.tflite"), replacing an existing file; verified by MD5. */
 export async function upload(path, bytes, timeoutMs = 120000) {
-  await del(path);
+  await remove(path);
   const r = await queued(() => req(`/upload${path}?md5`, { method: "POST", body: bytes }, timeoutMs));
   const got = (await r.json()).md5;
   const want = md5(bytes);

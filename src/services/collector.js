@@ -14,6 +14,7 @@ import { decodeBrowser, IN_W, IN_H } from "../lib/dataset.js";
 import { resizeBilinear } from "../lib/resize.js";
 import { predLabel } from "../lib/labels.js";
 import { spreadOrder } from "../lib/spread.js";
+import { rollingRate } from "../utils/rate.js";
 
 const NAME_RE = /^(-?\d+(?:\.\d+)?)_(.+)_([^_]+)_(\d{8}-\d{6})\.jpg$/i;
 
@@ -114,12 +115,13 @@ export async function scan({ days = 7, quota = 100, have = new Map(), shouldStop
 
 /**
  * Step 2: download what scan() chose. onProgress({fetched, failed, total, rate, folder}),
- * rate = images per second measured so far.
+ * rate = images per second over the last seconds.
  */
 export async function download(plan, { shouldStop = () => false, onProgress = () => {} } = {}) {
   const doneHours = await kvGet("collectedHours", {});
   const stats = { fetched: 0, failed: 0, total: plan.toFetch, folders: 0, rate: 0 };
-  const t0 = performance.now();
+  const speed = rollingRate();
+  speed.mark(0);
   for (const h of plan.hours) {
     if (shouldStop()) break;
     let batch = [], left = 0;
@@ -135,7 +137,8 @@ export async function download(plan, { shouldStop = () => false, onProgress = ()
         stats.failed++;
       }
       if (batch.length >= 25) { await putCrops(batch); batch = []; }
-      stats.rate = (stats.fetched + stats.failed) / ((performance.now() - t0) / 1000);
+      speed.mark(stats.fetched + stats.failed);
+      stats.rate = speed.rate();
       onProgress({ ...stats, folder: h.key });
     }
     if (batch.length) await putCrops(batch);

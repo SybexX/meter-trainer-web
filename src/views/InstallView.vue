@@ -2,10 +2,12 @@
 <script setup>
 import { ref } from "vue";
 import { t, tHtml } from "@/i18n/index.js";
+import { HINT } from "@/i18n/hints.js";
 import { app, runTask } from "@/stores/app.js";
 import { setup, refreshSetup } from "@/stores/setup.js";
 import { train } from "@/stores/train.js";
 import { install, runInstall, runUndo, installQuestion, canInstall } from "@/stores/install.js";
+import { exportModelZip } from "@/stores/modelExport.js";
 import { saveFile } from "@/utils/format.js";
 import StepPill from "@/components/StepPill.vue";
 import BaseLogPanel from "@/components/BaseLogPanel.vue";
@@ -30,6 +32,7 @@ async function undo() {
     <label class="f" for="fname">{{ t("File name") }} <input id="fname" v-model="install.fname" type="text" class="wide"></label>
     <button id="btnInstall" class="primary" :disabled="!!app.busy || !canInstall()" @click="question = installQuestion(setup.cfg)">{{ t("Install and use this model") }}</button>
     <button id="btnDownload" :disabled="!train.model" @click="download">{{ t("Download .tflite") }}</button>
+    <button id="btnDownloadZip" :disabled="!!app.busy || !train.model?.trainIds" :data-hint="HINT.modelZip" @click="exportModelZip('install')">{{ t("Download with its images (zip)") }}</button>
   </div>
   <div v-if="question" class="confirm"><span>{{ question }}</span>
     <button class="primary" @click="doInstall">{{ t("Install") }}</button><button @click="question = ''">{{ t("Cancel") }}</button>

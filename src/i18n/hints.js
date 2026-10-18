@@ -70,7 +70,8 @@ export const HINT = {
   newModelBetween: t("Share of those the new model reads as either of the two digits."),
   // settings
   daysBack: t("How many days of the device’s image folders to look at."),
-  deviceState: t("One file on the device's SD card ({file}) with the images and labels of this browser. Save here, load in another browser (a phone, say) and go on labelling there; loading adds what is missing and keeps the newer label of each image.", { file: "/config/trainer-state.zip" }),
+  modelZip: t("The model with the images it learned from and the test images: labels.csv, model.json and index.html, one page showing every image by wheel and label. Unpack the zip and open index.html."),
+  deviceState: t("Files on the device's SD card ({file} and its parts of up to 7 MB) with the images and labels of this browser. Save here, load in another browser (a phone, say) and go on labelling there; loading adds what is missing and keeps the newer label of each image.", { file: "/config/trainer-state.zip" }),
   perReading: t("Images kept per wheel and device reading (for example dig3 reading 7), spread evenly over the hours it was seen: old and new days, day and night. A wheel at rest shows the same digit for days, so most of its images are not needed."),
   modelSize: t("Bigger models can be a little more accurate but take longer to read each digit on the device."),
   epochs: t("How many times training goes through all images. The page keeps the epoch with the lowest validation loss, so more is safe, only slower."),
@@ -78,7 +79,7 @@ export const HINT = {
   lr: t("How big each learning step is. Too high and training jumps around; too low and it is slow."),
   finalAll: t("The comparison needs a model that has not seen the test images. The model you install does not: training it again on all images uses the newest days too, which matters most for a wheel added recently."),
   llmN: t("How many images to send to the AI server this time. They are spread over all wheels and readings."),
-  show: t("Needs review: one source, or sources disagree. Disagreements: the device and the AI read different digits. Not approved by you: everything you have not labelled yourself. Usable: what training uses. Labelled by you: your own labels."),
+  show: t("Needs review: one source, or sources disagree. Disagreements: the device and the AI read different digits. Not approved by you: everything you have not labelled yourself. Usable: what training can use. Used for training (●): the images the last model learned from. Usable, not used for training: left out as near-duplicates or over the limit per wheel and label, or labelled after that training. Labelled by you: your own labels."),
 };
 
 /** Hint for an image tile in the review grid, by label status. */
