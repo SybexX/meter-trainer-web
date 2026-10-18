@@ -466,4 +466,18 @@ export default {
     "По меткам",
   "By wheel and label":
     "По барабанам и меткам",
+  "How to label a wheel between two digits":
+    "Как размечать барабан между двумя цифрами",
+  "One digit visible whole: label that digit, even with a piece of the next one at the edge. Between (T, then the lower digit: T 3 = 3/4) only when both digits are cut off by the window’s edges. The device counts the same way: closer than 0.3 to a digit is that digit, 0.3 to 0.7 is between. Labels that differ on this border teach the model “something in between”, and it then hesitates on such images.":
+    "Одна цифра видна целиком — ставьте её, даже если у края виден кусок соседней. «Между» (T, затем меньшая цифра: T 3 = 3/4) — только когда обе цифры обрезаны краями окна. Устройство считает так же: ближе 0.3 к цифре — эта цифра, от 0.3 до 0.7 — между. Если на этой границе метки разные, модель учит «что-то среднее» и потом колеблется на таких кадрах.",
+  "Window with the wheel at {p}":
+    "Окно с барабаном в положении {p}",
+  "in the middle":
+    "по центру",
+  "3 whole, the edge of 4 below":
+    "3 целиком, снизу край 4",
+  "both cut off":
+    "обе обрезаны",
+  "4 whole, the edge of 3 above":
+    "4 целиком, сверху край 3",
 };

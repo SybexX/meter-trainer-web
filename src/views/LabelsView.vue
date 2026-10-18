@@ -5,6 +5,7 @@ import { t } from "@/i18n/index.js";
 import StepPill from "@/components/StepPill.vue";
 import LabelsCoverageTable from "@/components/labels/LabelsCoverageTable.vue";
 import LabelsAiServer from "@/components/labels/LabelsAiServer.vue";
+import LabelsHalfGuide from "@/components/labels/LabelsHalfGuide.vue";
 import LabelsReviewPanel from "@/components/labels/LabelsReviewPanel.vue";
 import LabelsKeyDrawer from "@/components/labels/LabelsKeyDrawer.vue";
 
@@ -18,6 +19,7 @@ const toReview = () => reviewHead.value.scrollIntoView({ behavior: "smooth", blo
   <LabelsCoverageTable @opened="toReview" />
   <LabelsAiServer />
   <h3 ref="reviewHead">{{ t("Review") }}</h3>
+  <LabelsHalfGuide />
   <LabelsReviewPanel />
   <LabelsKeyDrawer />
 </template>

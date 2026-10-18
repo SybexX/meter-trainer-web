@@ -40,7 +40,9 @@ A wizard: Start (overview, automatic run) and five steps, each reachable at any 
    server (Ollama `/api/chat` or OpenAI-compatible `/v1/chat/completions`) and your
    review. Two agreeing sources = confirmed. Only yours and confirmed labels train by
    default. A coverage table and readiness verdict show what is missing. The review grid
-   has keyboard labelling and a touch layout for phones.
+   has keyboard labelling and a touch layout for phones, marks the images the last model
+   learned from (●), and explains with drawn examples how to label a wheel between two
+   digits (one digit whole = that digit; both cut off = between).
 4. **Train:** in a Web Worker (keeps running in a background tab). The test split is the
    newest days. Per wheel and label up to 300 images train, spread over time with
    near-duplicates left out; smaller groups are repeated (up to 4×) so each counts about as
@@ -49,14 +51,17 @@ A wizard: Start (overview, automatic run) and five steps, each reachable at any 
    model got wrong are listed, the surest mistakes first (often a wrong label), and open in
    the review.
 5. **Install:** uploads the model to `/config/`, switches `[Digits] Model` after a round,
-   restarts the device, waits for the first reading; one-click undo.
+   restarts the device, waits for the first reading; one-click undo. The model can also be
+   downloaded as a zip with the images it learned from, the test images and `index.html`,
+   one page showing them all by label or by wheel and label.
 
 An **automatic run** does 2–5 in a row and installs only when the new model is at least as
 good on the same images.
 
 **Save to the device / Load from the device** (Collect and Labels steps) keep the whole
-state (images, labels, collected folders) in one file on the SD card,
-`/config/trainer-state.zip`. Load it in another browser, a phone for example, and go on
+state (images, labels, collected folders) on the SD card: `/config/trainer-state.zip`
+(labels and the image list) plus the JPEGs in parts of up to 7 MB, as the device takes
+files up to 8000 KB. Load it in another browser, a phone for example, and go on
 labelling there. Loading adds the missing images and keeps the newer label of each image.
 
 ## Build
@@ -80,7 +85,7 @@ tag `v<major>.<minor>.<patch>` builds with that version in the page header and p
 a release with `trainer.html.gz` and `trainer.html`:
 
 ```bash
-npm version 0.6.0      # sets package.json, commits, tags v0.6.0
+npm version 0.7.0      # sets package.json, commits, tags v0.7.0
 git push --follow-tags
 ```
 
@@ -108,7 +113,8 @@ src/
 
 - Stores: `app.js` holds the open step, the one running task (`runTask`), status lines
   and step pills; `project.js` the crops and labels; then one per step (`setup`,
-  `collect`, `ai`, `review`, `train`, `install`, `auto`, `datasetExport`, `deviceState`). Crops and
+  `collect`, `ai`, `review`, `train`, `install`, `auto`, `datasetExport`, `deviceState`,
+  `modelExport`). Crops and
   labels are large, so `project.js` keeps them outside Vue's reactivity and bumps a
   `rev` counter when they change.
 - Imports: `@/` (= `src/`) in components and stores; `lib/`, `services/`, `i18n/` and
