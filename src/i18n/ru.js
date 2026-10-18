@@ -114,8 +114,8 @@ export default {
 
   // ---- 2. collect
   "Collect images": "Сбор изображений",
-  "Copies the digit images the device saved into this browser. Checking first lists the device’s folders and shows how much there is to download. Images are grouped by wheel and by what the device read (a digit, a position between two digits, or a rejected reading); of each group only the newest “images per reading” are downloaded, newest first; nothing already here is deleted. A wheel at rest shows the same digit for days, so most of its images are skipped. The device sends about three images a second.":
-    "Копирует в этот браузер изображения цифр, сохранённые устройством. Поиск сначала просматривает папки устройства и показывает, сколько предстоит загрузить. Изображения группируются по барабану и по значению, которое прочитало устройство (цифра, положение между двумя цифрами или отклонённое показание); из каждой группы загружаются только самые новые «изображения на значение», начиная с новых; уже загруженное не удаляется. Неподвижный барабан днями показывает одну и ту же цифру, поэтому большая часть его изображений пропускается. Устройство отдаёт около трёх изображений в секунду.",
+  "Copies the digit images the device saved into this browser. Checking first lists the device’s folders and shows how much there is to download. Images are grouped by wheel and by what the device read (a digit, a position between two digits, or a rejected reading); each group keeps “images per reading” spread over all its hours: old and new days, day and night; nothing already here is deleted. A wheel at rest shows the same digit for days, so most of its images are skipped. The device sends about three images a second.":
+    "Копирует в этот браузер изображения цифр, сохранённые устройством. Поиск сначала просматривает папки устройства и показывает, сколько предстоит загрузить. Изображения группируются по барабану и по значению, которое прочитало устройство (цифра, положение между двумя цифрами или отклонённое показание); в каждой группе хранится «изображений на значение», равномерно по всем её часам: старые и новые дни, день и ночь; уже загруженное не удаляется. Неподвижный барабан днями показывает одну и ту же цифру, поэтому большая часть его изображений пропускается. Устройство отдаёт около трёх изображений в секунду.",
   "Days back": "Период, дней",
   "Images per reading": "Изображений на значение",
   "Check for new images": "Найти новые изображения",
@@ -322,8 +322,8 @@ export default {
   "only {n} usable training images; collect or label more first": "для обучения пригодно всего {n} изображений; сначала соберите или разметьте больше",
   "Step 1 of 2 (for the comparison): ": "Этап 1 из 2 (для сравнения): ",
   "Step 2 of 2 (final model, all images): ": "Этап 2 из 2 (итоговая модель, все изображения): ",
-  "training on {n} images, testing on {m} from each wheel’s newest days…": "обучение на {n} изображениях, проверка на {m} из последних дней каждого барабана…",
-  "training on {n} images…": "обучение на {n} изображениях…",
+  "training on {n} different images ({d} near-duplicates left out), testing on {m} from each wheel’s newest days…": "обучение на {n} разных изображениях (почти одинаковых пропущено: {d}), проверка на {m} из последних дней каждого барабана…",
+  "training on {n} different images ({d} near-duplicates left out)…": "обучение на {n} разных изображениях (почти одинаковых пропущено: {d})…",
   "Done in {m} min (kept epoch {e}). Model {kb} KB, trained on {n} images": "Готово за {m} мин (лучшая эпоха — {e}). Модель {kb} КБ, обучена на {n} изображениях",
   ", the test images included": ", включая тестовые",
   "Training failed: {err}": "Обучение не удалось: {err}",
@@ -400,7 +400,7 @@ export default {
   "Images with only one source, or whose sources disagree. Not used for training until you check them.": "Изображения с одним источником или с расхождением источников. Не используются для обучения, пока вы их не проверите.",
   "Usable images where the wheel stands between {a} and {b}.": "Пригодные изображения, где барабан стоит между {a} и {b}.",
   "Usable images labelled {l}.": "Пригодные изображения с меткой {l}.",
-  "Images chosen for download: the newest of their reading.": "Изображения, выбранные для загрузки: самые новые для их значения.",
+  "Images chosen for download: they fill the hours their reading has too few images from.": "Изображения, выбранные для загрузки: они заполняют часы, из которых для их значения мало изображений.",
   "Images left on the device: their reading already has as many newer images here.": "Изображения, оставленные на устройстве: для их значения здесь уже столько же более новых.",
   "Readings (wheel + what the device read) that reach “images per reading” after this download.": "Значения (барабан + что прочитало устройство), которые после этой загрузки наберут «изображений на значение».",
   "Readings that still have fewer than “images per reading”, even after this download. More days would help.": "Значения, у которых и после этой загрузки меньше «изображений на значение». Помогут дополнительные дни.",
@@ -411,8 +411,8 @@ export default {
   "Test images where the wheel stands between two digits.": "Тестовые изображения, где барабан стоит между двумя цифрами.",
   "Share of those the new model reads as either of the two digits.": "Доля таких изображений, которые новая модель читает как одну из двух цифр.",
   "How many days of the device’s image folders to look at.": "За сколько последних дней просматривать папки с изображениями на устройстве.",
-  "Images kept per wheel and device reading (for example dig3 reading 7): the newest ones. A wheel at rest shows the same digit for days, so most of its images are not needed.":
-    "Сколько изображений брать на каждый барабан и прочитанное устройством значение (например, dig3 = 7): самые новые. Неподвижный барабан днями показывает одну и ту же цифру, поэтому большая часть его изображений не нужна.",
+  "Images kept per wheel and device reading (for example dig3 reading 7), spread evenly over the hours it was seen: old and new days, day and night. A wheel at rest shows the same digit for days, so most of its images are not needed.":
+    "Сколько изображений брать на каждый барабан и прочитанное устройством значение (например, dig3 = 7), равномерно по часам, когда оно встречалось: старые и новые дни, день и ночь. Неподвижный барабан днями показывает одну и ту же цифру, поэтому большая часть его изображений не нужна.",
   "Bigger models can be a little more accurate but take longer to read each digit on the device.": "Большие модели бывают чуть точнее, но дольше распознают каждую цифру на устройстве.",
   "How many times training goes through all images. The page keeps the epoch with the lowest validation loss, so more is safe, only slower.":
     "Сколько раз обучение проходит по всем изображениям. Страница сохраняет эпоху с наименьшими потерями на валидации, поэтому больше — безопасно, только дольше.",

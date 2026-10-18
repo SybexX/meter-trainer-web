@@ -4,14 +4,16 @@
 // pred >= 100 marks a reading below CNNGoodThreshold (actual value pred - 100).
 // The ESP32 serves ~3 files/s, so not every crop is fetched. The device's reading in the
 // file name sorts each crop into a group (wheel + digit, or wheel + "between 7 and 8", or
-// wheel + rejected); per group only crops among its newest `quota` are fetched (newest
-// hours first), so the set follows the meter as it looks now; nothing stored is deleted.
-// A wheel at rest shows the same digit for days, so most of its crops are skipped.
+// wheel + rejected); per group `quota` crops are kept, spread over the hours of the day
+// (lighting) and over old and new days, so the set covers how the meter looked then and
+// looks now; nothing stored is deleted. A wheel at rest shows the same digit for days, so
+// most of its crops are skipped.
 import { list, getBytes } from "./device.js";
 import { hasCrop, putCrops, kvGet, kvSet } from "./db.js";
 import { decodeBrowser, IN_W, IN_H } from "../lib/dataset.js";
 import { resizeBilinear } from "../lib/resize.js";
 import { predLabel } from "../lib/labels.js";
+import { spreadOrder } from "../lib/spread.js";
 
 const NAME_RE = /^(-?\d+(?:\.\d+)?)_(.+)_([^_]+)_(\d{8}-\d{6})\.jpg$/i;
 
@@ -53,10 +55,10 @@ export const groupOf = (roi, pred, rejected) => `${roi}|${rejected ? "rejected" 
 /**
  * Step 1 of collecting: list the hour folders not collected yet (one small request each)
  * and decide what to download. Nothing is downloaded here.
- * have: Map group -> timestamps of the crops already stored. quota: crops kept per group (the newest).
+ * have: Map group -> timestamps of the crops already stored. quota: crops kept per group (see spreadOrder).
  * -> {hours, onDevice, toFetch, skippedEnough, have, groups: Map group -> {have, picked, available}}
  */
-export async function scan({ days = 7, quota = 150, have = new Map(), shouldStop = () => false, onProgress = () => {} } = {}) {
+export async function scan({ days = 7, quota = 100, have = new Map(), shouldStop = () => false, onProgress = () => {} } = {}) {
   const doneHours = await kvGet("collectedHours", {});
   const oldest = dayKey(new Date(Date.now() - (days - 1) * 86400000));
   const live = hourKeys();
@@ -97,10 +99,9 @@ export async function scan({ days = 7, quota = 150, have = new Map(), shouldStop
   }
   const byHour = new Map(plan.hours.map((h) => [h.key, h]));
   for (const [g, items] of cand) {
-    // the newest `quota` of stored + new: the new ones in that window are fetched
+    // `quota` of stored + new, spread over time: the new ones among them are fetched
     const stored = have.get(g) || [], already = stored.length;
-    const newest = [...stored.map((ts) => ({ ts })), ...items].sort((a, b) => (a.ts < b.ts ? 1 : -1)).slice(0, quota);
-    const pick = newest.filter((it) => it.id);
+    const pick = spreadOrder([...stored.map((ts) => ({ ts })), ...items], (it) => !it.id).slice(0, quota).filter((it) => it.id);
     pick.forEach((it) => byHour.get(it.hour).items.push(it));
     plan.toFetch += pick.length;
     plan.skippedEnough += items.length - pick.length;

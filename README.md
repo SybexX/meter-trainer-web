@@ -32,8 +32,9 @@ A wizard: Start (overview, automatic run) and five steps, each reachable at any 
    round (MD5-checked) and the device restarts.
 2. **Collect:** first a scan lists the new `/log/digit/<day>/<hour>/` folders and shows how many images there are to download and how long it takes; then crops go into IndexedDB. The device's
    reading is in each file name; crops are grouped by wheel + reading (digit, between two
-   digits, rejected) and of each group only the newest "images per reading" (default 100)
-   are downloaded, newest hours first; nothing already collected is deleted. Resumable;
+   digits, rejected) and each group keeps "images per reading" (default 100) spread evenly
+   over the hours it was seen, old and new days, day and night: a later collect fetches only
+   what fills the new hours; nothing already collected is deleted. Resumable;
    finished hours are remembered. A labelled dataset zip can be imported too.
 3. **Labels:** sources are the device reading, steady runs (≥4 identical readings), an AI
    server (Ollama `/api/chat` or OpenAI-compatible `/v1/chat/completions`) and your
@@ -41,7 +42,9 @@ A wizard: Start (overview, automatic run) and five steps, each reachable at any 
    default. A coverage table and readiness verdict show what is missing. The review grid
    has keyboard labelling and a touch layout for phones.
 4. **Train:** in a Web Worker (keeps running in a background tab). The test split is the
-   newest days. The new model is compared with the installed one on the same test images
+   newest days. Per wheel and label up to 300 images train, spread over time with
+   near-duplicates left out; smaller groups are repeated (up to 4×) so each counts about as
+   much. The new model is compared with the installed one on the same test images
    the device read, and only when there are at least 100 of them. The test images the new
    model got wrong are listed, the surest mistakes first (often a wrong label), and open in
    the review.

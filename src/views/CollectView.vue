@@ -35,7 +35,7 @@ async function clear() {
 
 <template>
   <h2>{{ t("Collect images") }} <StepPill step="collect" /></h2>
-  <p class="hint">{{ t("Copies the digit images the device saved into this browser. Checking first lists the device’s folders and shows how much there is to download. Images are grouped by wheel and by what the device read (a digit, a position between two digits, or a rejected reading); of each group only the newest “images per reading” are downloaded, newest first; nothing already here is deleted. A wheel at rest shows the same digit for days, so most of its images are skipped. The device sends about three images a second.") }}</p>
+  <p class="hint">{{ t("Copies the digit images the device saved into this browser. Checking first lists the device’s folders and shows how much there is to download. Images are grouped by wheel and by what the device read (a digit, a position between two digits, or a rejected reading); each group keeps “images per reading” spread over all its hours: old and new days, day and night; nothing already here is deleted. A wheel at rest shows the same digit for days, so most of its images are skipped. The device sends about three images a second.") }}</p>
   <div class="row">
     <label class="f" for="days" :data-hint="HINT.daysBack">{{ t("Days back") }} <input id="days" v-model.number="collect.days" type="number" min="1" max="60"></label>
     <label class="f" for="quota" :data-hint="HINT.perReading">{{ t("Images per reading") }} <input id="quota" v-model.number="collect.quota" type="number" min="10" max="2000" step="10"></label>

@@ -68,24 +68,24 @@ function trainOnce(set, filters, dense, epochs) {
 export async function runTrain() {
   const includeUnconfirmed = train.useUnconfirmed, final = train.finalAll;
   const set = buildTrainSet(data.crops, data.eff, { includeUnconfirmed });
-  if (set.trainIdx.length < 200) throw new Error(t("only {n} usable training images; collect or label more first", { n: set.trainIdx.length }));
+  if (set.unique < 200) throw new Error(t("only {n} usable training images; collect or label more first", { n: set.unique }));
   const [filters, dense] = parseSize(train.size);
   const epochs = train.epochs || 60;
   const t0 = performance.now();
   // 1. train without the test images, to compare with the installed model on them
   train.chartEpochs = epochs;
   phase = { n: 0, of: final ? 2 : 1, label: final ? t("Step 1 of 2 (for the comparison): ") : "" };
-  say("train", phase.label + t("training on {n} images, testing on {m} from each wheel’s newest days…", { n: num(set.trainIdx.length), m: num(set.testIdx.length) }));
+  say("train", phase.label + t("training on {n} different images ({d} near-duplicates left out), testing on {m} from each wheel’s newest days…", { n: num(set.unique), d: num(set.dupes), m: num(set.testIdx.length) }));
   const res = await trainOnce(set, filters, dense, epochs);
   const compare = compareOnTest(set, res.probs), errors = testErrors(set, res.probs);
-  let calib = set.trainIdx.slice(0, 300), kept = res.bestEpoch, trainN = set.trainIdx.length;
+  let calib = set.trainIdx.slice(0, 300), kept = res.bestEpoch, trainN = set.unique;
   // 2. the model to install: the same recipe on every usable image, the test images included
   if (final && !app.stop) {
     const all = buildTrainSet(data.crops, data.eff, { includeUnconfirmed, all: true });
     phase = { ...phase, n: 1, label: t("Step 2 of 2 (final model, all images): ") };
-    say("train", phase.label + t("training on {n} images…", { n: num(all.trainIdx.length) }));
+    say("train", phase.label + t("training on {n} different images ({d} near-duplicates left out)…", { n: num(all.unique), d: num(all.dupes) }));
     const res2 = await trainOnce(all, filters, dense, epochs);
-    calib = all.trainIdx.slice(0, 300); kept = res2.bestEpoch; trainN = all.trainIdx.length;
+    calib = all.trainIdx.slice(0, 300); kept = res2.bestEpoch; trainN = all.unique;
   }
   train.bar = 1;
   // export right away (calibration on 300 training images of the set the worker holds now)

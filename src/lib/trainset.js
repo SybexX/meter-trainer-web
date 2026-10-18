@@ -5,10 +5,46 @@
 //    keeps most of its images for training.
 //  - all: no test split; the final model trains on every usable image
 //  - only "you" and "confirmed" labels, unless includeUnconfirmed
-//  - per wheel and label at most `cap` training crops, spread evenly over time (a wheel at
+//  - per wheel and label at most `cap` training crops, spread over time (every hour that has
+//    any, old and new days), leaving out near-duplicates of crops already taken (a wheel at
 //    rest would otherwise flood the set with one picture)
-import { PIX } from "./dataset.js";
+//  - smaller wheel + label groups are repeated (up to MAX_REPEAT times) towards the median
+//    group size, so each is seen about as often; augmentation makes the repeats differ
+import { PIX, IN_H, IN_W, IN_C } from "./dataset.js";
 import { target } from "./labels.js";
+import { spreadOrder } from "./spread.js";
+
+// Mean gray difference (0..255) on a 16x10 thumbnail below which two crops count as the same
+// picture. Crops of a resting wheel minutes apart differ by ~0.7 (JPEG and sensor noise).
+export const DUP_DIST = 1.0;
+const MAX_REPEAT = 4;
+const SIG_H = IN_H / 2, SIG_W = IN_W / 2, SIG = SIG_H * SIG_W;
+
+/** 16x10 gray thumbnail of a crop (2x2 blocks). */
+function signature(pix) {
+  const s = new Float32Array(SIG);
+  for (let y = 0; y < IN_H; y++) for (let x = 0; x < IN_W; x++) {
+    let v = 0;
+    for (let c = 0; c < IN_C; c++) v += pix[(y * IN_W + x) * IN_C + c];
+    s[(y >> 1) * SIG_W + (x >> 1)] += v;
+  }
+  for (let i = 0; i < SIG; i++) s[i] /= 4 * IN_C;
+  return s;
+}
+
+/** Up to cap rows of one group, spread over time, none a near-duplicate of another. -> {kept, dupes} */
+function distinct(rows, cap) {
+  const kept = [], sigs = [];
+  let dupes = 0;
+  for (const r of spreadOrder(rows)) {
+    if (kept.length >= cap) break;
+    const s = signature(r.pix);
+    const lim = DUP_DIST * SIG;
+    if (sigs.some((o) => { let d = 0; for (let i = 0; i < SIG && d < lim; i++) d += Math.abs(o[i] - s[i]); return d < lim; })) { dupes++; continue; }
+    kept.push(r); sigs.push(s);
+  }
+  return { kept, dupes };
+}
 
 /** Per wheel: a predicate "is this row a test row", from the newest days or images of the wheel. */
 function testSplit(rows, testFrac) {
@@ -37,11 +73,13 @@ export function buildTrainSet(crops, eff, { includeUnconfirmed = false, cap = 30
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(r);
   }
-  const train = [];
+  const train = [], groupOfRow = [];
+  let dupes = 0;
   for (const g of groups.values()) {
-    if (g.length <= cap) { train.push(...g); continue; }
-    const step = (g.length - 1) / (cap - 1);
-    for (let i = 0; i < cap; i++) train.push(g[Math.round(i * step)]);
+    const d = distinct(g, cap);
+    dupes += d.dupes;
+    groupOfRow.push(...d.kept.map(() => d.kept.length));
+    train.push(...d.kept);
   }
   const rowsOut = [...train, ...test];
   const X = new Uint8Array(rowsOut.length * PIX), Y = new Float32Array(rowsOut.length * 10);
@@ -54,10 +92,19 @@ export function buildTrainSet(crops, eff, { includeUnconfirmed = false, cap = 30
   const trainIdx = train.map((_, i) => i);
   for (let i = trainIdx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [trainIdx[i], trainIdx[j]] = [trainIdx[j], trainIdx[i]]; }
   const nVal = Math.max(1, Math.round(trainIdx.length * 0.08));
+  // repeat rows of small groups (after the validation split, so no repeat is validated on)
+  const sizes = [...groupOfRow].sort((a, b) => a - b), median = sizes[sizes.length >> 1] || 1;
+  const fit = trainIdx.slice(nVal);
+  for (const i of trainIdx.slice(nVal)) {
+    const n = Math.min(MAX_REPEAT, Math.round(median / groupOfRow[i]));
+    for (let k = 1; k < n; k++) fit.push(i);
+  }
+  for (let i = fit.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [fit[i], fit[j]] = [fit[j], fit[i]]; }
   return {
     X, Y, meta,
-    valIdx: trainIdx.slice(0, nVal), trainIdx: trainIdx.slice(nVal),
+    valIdx: trainIdx.slice(0, nVal), trainIdx: fit,
     testIdx: test.map((_, k) => train.length + k),
+    unique: train.length, dupes,
     days: days.length,
   };
 }

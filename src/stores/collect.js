@@ -14,7 +14,7 @@ export const FILES_PER_S = 3; // what an ESP32-CAM serves; the measured rate rep
 
 export const collect = reactive({
   days: 7,
-  quota: 100,    // images kept per wheel + device reading (the newest)
+  quota: 100,    // images kept per wheel + device reading (spread over time)
   plan: null,    // result of the last check (scan), until downloaded
   bar: 0,        // progress 0..1
 });
