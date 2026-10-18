@@ -2,7 +2,7 @@
 // then the comparison with the installed model and the int8 export.
 import { computed, markRaw, reactive } from "vue";
 import * as store from "@/services/db.js";
-import { buildTrainSet, compareOnTest, testErrors } from "@/lib/trainset.js";
+import { buildTrainSet, compareOnTest, compareByLabel, testErrors } from "@/lib/trainset.js";
 import { MIN_COMPARE } from "@/lib/readiness.js";
 import { t, N_ } from "@/i18n/index.js";
 import { app, say, setPill, onStop } from "@/stores/app.js";
@@ -19,9 +19,10 @@ export const train = reactive({
   history: [],        // per epoch: { epoch, epochs, loss, valLoss, valAcc, seconds }
   chartEpochs: 1,     // x axis length of the loss chart
   compare: null,      // per wheel: { roi, n, model, dev, devN, modelOnDev, t, tModel }
+  compareLabels: null, // per label: { label, n, model, dev, devN }
   errors: null,       // test images the comparison model got wrong: { id, roi, label, guess, p }, surest first
   testN: 0,           // test images behind compare and errors
-  model: null,        // { name, bytes, at, acc, compareN, final, trainN, accOnDev, devAcc, trainIds, testIds }
+  model: null,        // { name, bytes, at, acc, compareN, final, trainN, accOnDev, devAcc, trainIds, testIds, testErrors }
 });
 
 /** Ids of the images the last model learned from (its near-duplicates and the test images left out). */
@@ -89,7 +90,7 @@ export async function runTrain() {
   // 1. train without the test images, to compare with the installed model on them
   train.chartEpochs = epochs;
   phase = { n: 0, of: final ? 2 : 1, label: final ? t("Step 1 of 2 (for the comparison): ") : "" };
-  say("train", phase.label + t("training on {n} different images ({d} near-duplicates left out), testing on {m} from each wheel’s newest days…", { n: num(set.unique), d: num(set.dupes), m: num(set.testIdx.length) }));
+  say("train", phase.label + t("training on {n} different images ({d} near-duplicates left out), testing on {m} of the newest of each wheel and label…", { n: num(set.unique), d: num(set.dupes), m: num(set.testIdx.length) }));
   const res = await trainOnce(set, filters, dense, epochs);
   const compare = compareOnTest(set, res.probs), errors = testErrors(set, res.probs);
   let calib = set.trainIdx.slice(0, 300), kept = res.bestEpoch, trainN = set.unique, trainIds = idsOf(set);
@@ -115,9 +116,10 @@ export async function runTrain() {
   const fair = tot.dn >= MIN_COMPARE;
   const model = { name, bytes, at: Date.now(), acc: tot.n ? tot.m / tot.n : null, compareN: tot.dn, final: final && !app.stop, trainN,
     accOnDev: fair ? tot.md / tot.dn : null, devAcc: fair ? tot.d / tot.dn : null,
-    trainIds, testIds: set.testIdx.map((i) => set.meta[i].id) };
+    trainIds, testIds: set.testIdx.map((i) => set.meta[i].id), testErrors: errors.map(({ id, guess, p }) => ({ id, guess, p })) };
   await store.kvSet("lastModel", model);
   train.compare = markRaw(compare);
+  train.compareLabels = markRaw(compareByLabel(set, res.probs));
   train.errors = markRaw(errors); train.testN = set.testIdx.length;
   train.model = markRaw(model);
   const v = verdictOf(model);

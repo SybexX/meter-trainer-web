@@ -319,7 +319,6 @@ export default {
   "only {n} usable training images; collect or label more first": "для обучения пригодно всего {n} изображений; сначала соберите или разметьте больше",
   "Step 1 of 2 (for the comparison): ": "Этап 1 из 2 (для сравнения): ",
   "Step 2 of 2 (final model, all images): ": "Этап 2 из 2 (итоговая модель, все изображения): ",
-  "training on {n} different images ({d} near-duplicates left out), testing on {m} from each wheel’s newest days…": "обучение на {n} разных изображениях (почти одинаковых пропущено: {d}), проверка на {m} из последних дней каждого барабана…",
   "training on {n} different images ({d} near-duplicates left out)…": "обучение на {n} разных изображениях (почти одинаковых пропущено: {d})…",
   "Done in {m} min (kept epoch {e}). Model {kb} KB, trained on {n} images": "Готово за {m} мин (лучшая эпоха — {e}). Модель {kb} КБ, обучена на {n} изображениях",
   ", the test images included": ", включая тестовые",
@@ -331,8 +330,6 @@ export default {
   "New model": "Новая модель",
   "Device now": "Устройство сейчас",
   "Between digits": "Между цифрами",
-  "Test images are each wheel’s newest days and were not used for this comparison. “Device now” is what the installed model read on the same images.":
-    "Тестовые изображения — последние дни каждого барабана; для этого сравнения они не использовались. «Устройство сейчас» — что прочитала установленная модель на тех же изображениях.",
   "The model to install was then trained again on all images, the test images included, so it has seen more than the one scored here.":
     "Модель для установки затем обучена заново на всех изображениях, включая тестовые, поэтому она видела больше, чем оценённая здесь.",
   "On the {n} test images the device read itself: new {a}%, installed {b}%. Where the label came from the device, the installed model’s score is flattered.":
@@ -401,8 +398,6 @@ export default {
   "Images left on the device: their reading already has as many newer images here.": "Изображения, оставленные на устройстве: для их значения здесь уже столько же более новых.",
   "Readings (wheel + what the device read) that reach “images per reading” after this download.": "Значения (барабан + что прочитало устройство), которые после этой загрузки наберут «изображений на значение».",
   "Readings that still have fewer than “images per reading”, even after this download. More days would help.": "Значения, у которых и после этой загрузки меньше «изображений на значение». Помогут дополнительные дни.",
-  "Each wheel’s newest days (or newest 20% of its images), held back from training for this comparison, with a usable label.":
-    "Последние дни каждого барабана (или последние 20% его изображений) с пригодной меткой, отложенные от обучения для этого сравнения.",
   "Share of the test images the new model reads correctly.": "Доля тестовых изображений, которые новая модель распознаёт верно.",
   "Share the installed model got right on the test images it read itself (its reading is in the file name).": "Доля верных ответов установленной модели на тестовых изображениях, прочитанных ею самой (показание есть в имени файла).",
   "Test images where the wheel stands between two digits.": "Тестовые изображения, где барабан стоит между двумя цифрами.",
@@ -415,8 +410,6 @@ export default {
     "Сколько раз обучение проходит по всем изображениям. Страница сохраняет эпоху с наименьшими потерями на валидации, поэтому больше — безопасно, только дольше.",
   "Images per training step. Larger is faster on a GPU; the default suits most cases.": "Изображений на шаг обучения. Больше — быстрее на GPU; значение по умолчанию подходит почти всегда.",
   "How big each learning step is. Too high and training jumps around; too low and it is slow.": "Величина каждого шага обучения. Слишком большая — обучение скачет; слишком маленькая — идёт медленно.",
-  "The comparison needs a model that has not seen the test images. The model you install does not: training it again on all images uses the newest days too, which matters most for a wheel added recently.":
-    "Для сравнения нужна модель, не видевшая тестовых изображений. Устанавливаемой это не нужно: повторное обучение на всех изображениях использует и последние дни, что особенно важно для недавно добавленного барабана.",
   "How many images to send to the AI server this time. They are spread over all wheels and readings.": "Сколько изображений отправить на ИИ-сервер в этот раз. Они распределяются по всем барабанам и значениям.",
   "Labelled by you. Used for training.": "Размечено вами. Используется для обучения.",
   "Two sources agree. Used for training.": "Два источника согласны. Используется для обучения.",
@@ -434,10 +427,6 @@ export default {
     "Файлы на SD-карте устройства ({file} и его части до 7 МБ) с изображениями и метками этого браузера. Сохраните здесь, загрузите в другом браузере (например, на телефоне) и продолжайте разметку там; при загрузке добавляется недостающее, а для каждого изображения остаётся более новая метка.",
   "Needs review: one source, or sources disagree. Disagreements: the device and the AI read different digits. Not approved by you: everything you have not labelled yourself. Usable: what training can use. Used for training (●): the images the last model learned from. Usable, not used for training: left out as near-duplicates or over the limit per wheel and label, or labelled after that training. Labelled by you: your own labels.":
     "Нужна проверка: один источник или источники расходятся. Расхождения: устройство и ИИ прочитали разные цифры. Не подтверждённые вами: всё, что вы не размечали сами. Пригодные: то, что может идти в обучение. Использованы в обучении (●): изображения, на которых училась последняя модель. Пригодные, не использованные в обучении: пропущены как почти одинаковые или сверх лимита на барабан и метку, либо размечены после того обучения. Размеченные вами: ваши метки.",
-  "Outlined: the test images (each wheel’s newest days), not learned from, used to compare with the installed model.":
-    "В рамке: тестовые изображения (последние дни каждого барабана); модель на них не училась, по ним она сравнивалась с установленной.",
-  "Outlined: the test images (each wheel’s newest days). The comparison model did not see them; this final model learned from them too.":
-    "В рамке: тестовые изображения (последние дни каждого барабана). Модель для сравнения их не видела; эта итоговая модель училась и на них.",
   "Saved {n} images and their labels on the device ({mb} MB in {p} files: {file} and its parts). Load it in another browser with “Load from the device”.":
     "На устройстве сохранено {n} изображений с метками ({mb} МБ в файлах: {p} — {file} и его части). В другом браузере откройте их кнопкой «Загрузить с устройства».",
   "The model with the images it learned from and the test images: labels.csv, model.json and index.html, one page showing every image by wheel and label. Unpack the zip and open index.html.":
@@ -480,4 +469,36 @@ export default {
     "обе обрезаны",
   "4 whole, the edge of 3 above":
     "4 целиком, сверху край 3",
+  "The newest 20% of each wheel and label (at least 3, from groups of 10 or more), held back from training for this comparison, with a usable label; near-duplicates left out, at most 50 per wheel and label.":
+    "Самые новые 20% каждой пары «барабан + метка» (не меньше 3, из групп от 10 изображений), отложенные от обучения для этого сравнения, с пригодной меткой; почти одинаковые убраны, не больше 50 на пару.",
+  "What the image shows: a digit, or the wheel between two digits.":
+    "Что на изображении: цифра или барабан между двумя цифрами.",
+  "Test images are the newest of each wheel and label, without near-duplicates, and were not used for this comparison. “Device now” is what the installed model read on the same images.":
+    "Тестовые изображения — самые новые для каждой пары «барабан + метка», без почти одинаковых; в обучении для этого сравнения они не участвовали. «Устройство сейчас» — что прочитала установленная модель на тех же изображениях.",
+  "The comparison needs a model that has not seen the test images. The model you install does not: training it again on all images uses the newest images too, which matters most for a wheel added recently.":
+    "Для сравнения нужна модель, не видевшая тестовых изображений. Устанавливаемой это не нужно: повторное обучение на всех изображениях использует и самые новые, что важнее всего для недавно добавленного барабана.",
+  "training on {n} different images ({d} near-duplicates left out), testing on {m} of the newest of each wheel and label…":
+    "обучение на {n} разных изображениях (почти одинаковых пропущено: {d}), проверка на {m} самых новых для каждой пары «барабан + метка»…",
+  "Outlined: the test images (the newest of each wheel and label). The comparison model did not see them; this final model learned from them too.":
+    "В рамке: тестовые изображения (самые новые для каждой пары «барабан + метка»). Модель для сравнения их не видела; эта итоговая модель училась и на них.",
+  "Outlined: the test images (the newest of each wheel and label), not learned from, used to compare with the installed model.":
+    "В рамке: тестовые изображения (самые новые для каждой пары «барабан + метка»); модель на них не училась, по ним она сравнивалась с установленной.",
+  "Red: the ones the comparison model got wrong; point at one for its answer.":
+    "Красные — те, где модель для сравнения ошиблась; наведите, чтобы увидеть её ответ.",
+  "Test images ({n})":
+    "Тестовые ({n})",
+  "Mistakes ({n})":
+    "Ошибки ({n})",
+  "model":
+    "модель",
+  "The browser blocked the new tab; allow pop-ups for this page.":
+    "Браузер заблокировал новую вкладку; разрешите всплывающие окна для этой страницы.",
+  "Preparing the images…":
+    "Подготовка изображений…",
+  "Opened the page with {n} images in a new tab.":
+    "Страница с изображениями ({n}) открыта в новой вкладке.",
+  "Show its images":
+    "Показать её изображения",
+  "Opens a page in a new tab with every image the model learned from and the test images, by label or by wheel, the comparison model's mistakes in red.":
+    "Открывает в новой вкладке страницу со всеми изображениями, на которых училась модель, и тестовыми — по меткам или по барабанам, ошибки модели для сравнения выделены красным.",
 };

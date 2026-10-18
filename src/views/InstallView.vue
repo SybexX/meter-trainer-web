@@ -7,7 +7,7 @@ import { app, runTask } from "@/stores/app.js";
 import { setup, refreshSetup } from "@/stores/setup.js";
 import { train } from "@/stores/train.js";
 import { install, runInstall, runUndo, installQuestion, canInstall } from "@/stores/install.js";
-import { exportModelZip } from "@/stores/modelExport.js";
+import { exportModelZip, openModelPage } from "@/stores/modelExport.js";
 import { saveFile } from "@/utils/format.js";
 import StepPill from "@/components/StepPill.vue";
 import BaseLogPanel from "@/components/BaseLogPanel.vue";
@@ -32,6 +32,7 @@ async function undo() {
     <label class="f" for="fname">{{ t("File name") }} <input id="fname" v-model="install.fname" type="text" class="wide"></label>
     <button id="btnInstall" class="primary" :disabled="!!app.busy || !canInstall()" @click="question = installQuestion(setup.cfg)">{{ t("Install and use this model") }}</button>
     <button id="btnDownload" :disabled="!train.model" @click="download">{{ t("Download .tflite") }}</button>
+    <button id="btnModelPage" :disabled="!!app.busy || !train.model?.trainIds" :data-hint="HINT.modelPage" @click="openModelPage('install')">{{ t("Show its images") }}</button>
     <button id="btnDownloadZip" :disabled="!!app.busy || !train.model?.trainIds" :data-hint="HINT.modelZip" @click="exportModelZip('install')">{{ t("Download with its images (zip)") }}</button>
   </div>
   <div v-if="question" class="confirm"><span>{{ question }}</span>

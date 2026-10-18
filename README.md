@@ -44,15 +44,18 @@ A wizard: Start (overview, automatic run) and five steps, each reachable at any 
    learned from (●), and explains with drawn examples how to label a wheel between two
    digits (one digit whole = that digit; both cut off = between).
 4. **Train:** in a Web Worker (keeps running in a background tab). The test split is the
-   newest days. Per wheel and label up to 300 images train, spread over time with
+   newest ~20% of each wheel and label, so every label is tested, the in-between positions
+   too; near-duplicates left out, at most 50 per wheel and label. Results per wheel and per
+   label. Per wheel and label up to 300 images train, spread over time with
    near-duplicates left out; smaller groups are repeated (up to 4×) so each counts about as
    much. The new model is compared with the installed one on the same test images
    the device read, and only when there are at least 100 of them. The test images the new
    model got wrong are listed, the surest mistakes first (often a wrong label), and open in
    the review.
 5. **Install:** uploads the model to `/config/`, switches `[Digits] Model` after a round,
-   restarts the device, waits for the first reading; one-click undo. The model can also be
-   downloaded as a zip with the images it learned from, the test images and `index.html`,
+   restarts the device, waits for the first reading; one-click undo. *Show its images* opens
+   a page in a new tab with every image the model learned from and the test images, the
+   comparison model's mistakes in red. The model can also be downloaded as a zip with the images it learned from, the test images and `index.html`,
    one page showing them all by label or by wheel and label.
 
 An **automatic run** does 2–5 in a row and installs only when the new model is at least as

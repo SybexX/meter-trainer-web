@@ -1,8 +1,9 @@
 // Build training arrays from the stored crops and their effective labels.
-//  - test split, per wheel: the newest ~20% of that wheel's days (or of its images, with
-//    fewer than 5 days), so the result says how the model does on days it has not seen.
-//    Per wheel, so a wheel added recently (all its images from the last days) still
-//    keeps most of its images for training.
+//  - test split, per wheel and label: the newest ~20% of that group's images (at least
+//    TEST_MIN, from groups of TEST_MIN_GROUP or more), so every label is tested, the rarer
+//    in-between positions too, on images newer than any it learned from; near-duplicates
+//    left out and at most TEST_CAP per group, so a wheel standing still for hours does not
+//    count as hundreds of images
 //  - all: no test split; the final model trains on every usable image
 //  - only "you" and "confirmed" labels, unless includeUnconfirmed
 //  - per wheel and label at most `cap` training crops, spread over time (every hour that has
@@ -11,13 +12,14 @@
 //  - smaller wheel + label groups are repeated (up to MAX_REPEAT times) towards the median
 //    group size, so each is seen about as often; augmentation makes the repeats differ
 import { PIX, IN_H, IN_W, IN_C } from "./dataset.js";
-import { target } from "./labels.js";
+import { LABELS, target } from "./labels.js";
 import { spreadOrder } from "./spread.js";
 
 // Mean gray difference (0..255) on a 16x10 thumbnail below which two crops count as the same
 // picture. Crops of a resting wheel minutes apart differ by ~0.7 (JPEG and sensor noise).
 export const DUP_DIST = 1.0;
 const MAX_REPEAT = 4;
+const TEST_MIN_GROUP = 10, TEST_MIN = 3, TEST_CAP = 50;
 const SIG_H = IN_H / 2, SIG_W = IN_W / 2, SIG = SIG_H * SIG_W;
 
 /** 16x10 gray thumbnail of a crop (2x2 blocks). */
@@ -46,36 +48,29 @@ function distinct(rows, cap) {
   return { kept, dupes };
 }
 
-/** Per wheel: a predicate "is this row a test row", from the newest days or images of the wheel. */
-function testSplit(rows, testFrac) {
-  const byRoi = new Map();
-  for (const r of rows) { if (!byRoi.has(r.roi)) byRoi.set(r.roi, []); byRoi.get(r.roi).push(r); }
-  const cut = new Map(); // roi -> {days?: Set, ts?: string}
-  for (const [roi, rs] of byRoi) {
-    const days = [...new Set(rs.map((r) => r.ts.slice(0, 8)))].sort();
-    if (days.length >= 5) cut.set(roi, { days: new Set(days.slice(days.length - Math.max(1, Math.round(days.length * testFrac)))) });
-    else cut.set(roi, { ts: rs[Math.floor(rs.length * (1 - testFrac))]?.ts ?? "99999999" }); // rs is sorted by ts
-  }
-  return (r) => { const c = cut.get(r.roi); return c.days ? c.days.has(r.ts.slice(0, 8)) : r.ts >= c.ts; };
-}
-
 export function buildTrainSet(crops, eff, { includeUnconfirmed = false, cap = 300, testFrac = 0.2, all = false } = {}) {
   const ok = (s) => s === "human" || s === "confirmed" || (includeUnconfirmed && s === "unconfirmed");
   const rows = crops.filter((c) => { const e = eff.get(c.id); return e && e.label && ok(e.status); })
     .sort((a, b) => (a.ts < b.ts ? -1 : 1));
   const days = [...new Set(rows.map((r) => r.ts.slice(0, 8)))].sort();
-  const isTest = all ? () => false : testSplit(rows, testFrac);
-  const test = [], groups = new Map();
+  const byGroup = new Map();
   for (const r of rows) {
-    const e = eff.get(r.id);
-    if (isTest(r)) { if (e.status !== "unconfirmed") test.push(r); continue; }
-    const k = `${r.roi}|${e.label}`;
-    if (!groups.has(k)) groups.set(k, []);
-    groups.get(k).push(r);
+    const k = `${r.roi}|${eff.get(r.id).label}`;
+    if (!byGroup.has(k)) byGroup.set(k, []);
+    byGroup.get(k).push(r);
+  }
+  const test = [], groups = [];
+  for (const g of byGroup.values()) {
+    // the newest of the group's sure labels are tested; unconfirmed ones only ever train
+    const sure = g.filter((r) => eff.get(r.id).status !== "unconfirmed");
+    const nTest = all || sure.length < TEST_MIN_GROUP ? 0 : Math.max(TEST_MIN, Math.round(sure.length * testFrac));
+    const cut = nTest ? sure[sure.length - nTest].ts : "~";
+    test.push(...distinct(sure.slice(sure.length - nTest), TEST_CAP).kept);
+    groups.push(g.filter((r) => r.ts < cut));
   }
   const train = [], groupOfRow = [];
   let dupes = 0;
-  for (const g of groups.values()) {
+  for (const g of groups) {
     const d = distinct(g, cap);
     dupes += d.dupes;
     groupOfRow.push(...d.kept.map(() => d.kept.length));
@@ -134,6 +129,19 @@ export function compareOnTest(set, probs) {
     g.set(m.roi, e);
   });
   return [...g.values()].sort((a, b) => a.roi.localeCompare(b.roi, undefined, { numeric: true }));
+}
+
+/** Per label: model accuracy and the device's on the test crops, in label order. */
+export function compareByLabel(set, probs) {
+  const g = new Map();
+  set.testIdx.forEach((r, k) => {
+    const m = set.meta[r], ok = set.Y[r * 10 + argmax(probs, k)] >= 0.5;
+    const e = g.get(m.label) || { label: m.label, n: 0, model: 0, dev: 0, devN: 0 };
+    e.n++; e.model += ok;
+    if (m.pred != null) { e.devN++; e.dev += !m.rejected && set.Y[r * 10 + (Math.round(m.pred) % 10)] >= 0.5; }
+    g.set(m.label, e);
+  });
+  return LABELS.filter((l) => g.has(l)).map((l) => g.get(l));
 }
 
 /**

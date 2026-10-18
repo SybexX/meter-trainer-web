@@ -28,9 +28,3 @@ Checked on the watermeter crops (81 × 46 px), 2026-10-19:
   (61 px on dig5 and dig8, 16–23 px on dig6 and dig7), so set it by hand.
 - On dig4, the "2" at rest moved 4 px over the days (camera or ROI moved); what counts for
   the model is the position in the window.
-
-## Test images without near-duplicates
-
-The test split is not cleaned of near-duplicates, so a wheel that stood still for hours at
-one in-between position shows up as dozens of identical "mistakes" (seen: 25 of 29 on
-dig8) and weighs that much in the comparison with the installed model.

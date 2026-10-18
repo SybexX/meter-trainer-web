@@ -63,13 +63,15 @@ export const HINT = {
   readingsFull: t("Readings (wheel + what the device read) that reach “images per reading” after this download."),
   readingsShort: t("Readings that still have fewer than “images per reading”, even after this download. More days would help."),
   // compare table (Train)
-  testImages: t("Each wheel’s newest days (or newest 20% of its images), held back from training for this comparison, with a usable label."),
+  testImages: t("The newest 20% of each wheel and label (at least 3, from groups of 10 or more), held back from training for this comparison, with a usable label; near-duplicates left out, at most 50 per wheel and label."),
+  labelCol: t("What the image shows: a digit, or the wheel between two digits."),
   newModel: t("Share of the test images the new model reads correctly."),
   deviceNow: t("Share the installed model got right on the test images it read itself (its reading is in the file name)."),
   between: t("Test images where the wheel stands between two digits."),
   newModelBetween: t("Share of those the new model reads as either of the two digits."),
   // settings
   daysBack: t("How many days of the device’s image folders to look at."),
+  modelPage: t("Opens a page in a new tab with every image the model learned from and the test images, by label or by wheel, the comparison model's mistakes in red."),
   modelZip: t("The model with the images it learned from and the test images: labels.csv, model.json and index.html, one page showing every image by wheel and label. Unpack the zip and open index.html."),
   deviceState: t("Files on the device's SD card ({file} and its parts of up to 7 MB) with the images and labels of this browser. Save here, load in another browser (a phone, say) and go on labelling there; loading adds what is missing and keeps the newer label of each image.", { file: "/config/trainer-state.zip" }),
   perReading: t("Images kept per wheel and device reading (for example dig3 reading 7), spread evenly over the hours it was seen: old and new days, day and night. A wheel at rest shows the same digit for days, so most of its images are not needed."),
@@ -77,7 +79,7 @@ export const HINT = {
   epochs: t("How many times training goes through all images. The page keeps the epoch with the lowest validation loss, so more is safe, only slower."),
   batch: t("Images per training step. Larger is faster on a GPU; the default suits most cases."),
   lr: t("How big each learning step is. Too high and training jumps around; too low and it is slow."),
-  finalAll: t("The comparison needs a model that has not seen the test images. The model you install does not: training it again on all images uses the newest days too, which matters most for a wheel added recently."),
+  finalAll: t("The comparison needs a model that has not seen the test images. The model you install does not: training it again on all images uses the newest images too, which matters most for a wheel added recently."),
   llmN: t("How many images to send to the AI server this time. They are spread over all wheels and readings."),
   show: t("Needs review: one source, or sources disagree. Disagreements: the device and the AI read different digits. Not approved by you: everything you have not labelled yourself. Usable: what training can use. Used for training (●): the images the last model learned from. Usable, not used for training: left out as near-duplicates or over the limit per wheel and label, or labelled after that training. Labelled by you: your own labels."),
 };
