@@ -88,7 +88,7 @@ tag `v<major>.<minor>.<patch>` builds with that version in the page header and p
 a release with `trainer.html.gz` and `trainer.html`:
 
 ```bash
-npm version 0.7.1      # sets package.json, commits, tags v0.7.1
+npm version 0.7.2      # sets package.json, commits, tags v0.7.2
 git push --follow-tags
 ```
 
