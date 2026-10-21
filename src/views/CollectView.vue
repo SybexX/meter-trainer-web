@@ -4,7 +4,7 @@ import { computed, ref } from "vue";
 import { t } from "@/i18n/index.js";
 import { HINT } from "@/i18n/hints.js";
 import { app, runTask, requestStop } from "@/stores/app.js";
-import { collect, FILES_PER_S, runScan, runDownload, perWheel, importZip, clearAll } from "@/stores/collect.js";
+import { collect, FILES_PER_S, filesPerSec, runScan, runDownload, perWheel, importZip, clearAll } from "@/stores/collect.js";
 import { train } from "@/stores/train.js";
 import { exportCsv, exportZip } from "@/stores/datasetExport.js";
 import { saveToDevice, loadFromDevice } from "@/stores/deviceState.js";
@@ -48,7 +48,7 @@ async function clear() {
 
   <div v-if="plan" id="plan" class="plan">
     <div><b>{{ num(plan.toFetch) }}</b><span>{{ t("new images to download") }}</span></div>
-    <div><b>{{ t("about {time}", { time: fmtTime(plan.toFetch / FILES_PER_S) }) }}</b><span>{{ t("at about {n} images/s", { n: FILES_PER_S }) }}</span></div>
+    <div><b>{{ t("about {time}", { time: fmtTime(plan.toFetch / filesPerSec()) }) }}</b><span>{{ collect.speed ? t("at {n} images/s, the average of the last download here", { n: collect.speed.rate.toFixed(1) }) : t("at about {n} images/s", { n: FILES_PER_S }) }}</span></div>
     <div><b>{{ num(plan.onDevice) }}</b><span>{{ t("images in {n} new hour folders on the device", { n: plan.listed }) }}</span></div>
     <div><b>{{ num(plan.skippedEnough) }}</b><span>{{ t("skipped: enough images of that reading already") }}</span></div>
     <div><b>{{ num(plan.have) }}</b><span>{{ t("already here") }}{{ plan.knownHours ? t(", plus {n} hours collected earlier", { n: plan.knownHours }) : "" }}</span></div>

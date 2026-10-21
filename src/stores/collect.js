@@ -10,14 +10,31 @@ import { app, say } from "@/stores/app.js";
 import { data, refreshProject } from "@/stores/project.js";
 import { fmtTime, num } from "@/utils/format.js";
 
-export const FILES_PER_S = 3; // what an ESP32-CAM serves; the measured rate replaces it while downloading
+export const FILES_PER_S = 3; // what an ESP32-CAM serves, until a download of this browser measured it
+const SPEED_MIN_IMAGES = 20, SPEED_MIN_SECONDS = 10; // shorter runs are too noisy to remember
 
 export const collect = reactive({
   days: 7,
   quota: 100,    // images kept per wheel + device reading (spread over time)
   plan: null,    // result of the last check (scan), until downloaded
   bar: 0,        // progress 0..1
+  speed: null,   // {rate, n, at}: the average images/s of the last long enough download, kept in this browser
 });
+
+/** The speed the estimate uses: measured by the last download here, else the usual device rate. */
+export const filesPerSec = () => collect.speed?.rate || FILES_PER_S;
+
+export async function loadCollectSpeed() {
+  collect.speed = await store.kvGet("collectSpeed");
+}
+
+/** Remembers the average speed of a finished download, whole-run wall time included. */
+async function rememberSpeed(res) {
+  const n = res.fetched + res.failed;
+  if (n < SPEED_MIN_IMAGES || res.seconds < SPEED_MIN_SECONDS) return;
+  collect.speed = { rate: n / res.seconds, n, at: Date.now() };
+  await store.kvSet("collectSpeed", collect.speed);
+}
 
 /** Crops already stored per download group (wheel + device reading). */
 function cropsByGroup() {
@@ -61,6 +78,7 @@ export async function runDownload() {
     },
   });
   say("collect", t(app.stop ? "Stopped: {n} new images" : "Done: {n} new images", { n: num(res.fetched) }) + (res.failed ? t(", {n} could not be read", { n: res.failed }) : "") + ".");
+  await rememberSpeed(res);
   collect.plan = null;
   await refreshProject();
 }
@@ -113,6 +131,7 @@ export async function importZip(f) {
 
 export async function clearAll() {
   await store.clearAll();
+  collect.speed = null;
   await refreshProject();
   say("collect", t("All data in this browser deleted."));
 }

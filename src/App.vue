@@ -7,6 +7,7 @@ import { app, go, STEPS, STEP_NAMES, pills, pillText, pillTip, stepOf } from "@/
 import { refreshProject } from "@/stores/project.js";
 import { refreshSetup } from "@/stores/setup.js";
 import { loadAiSettings } from "@/stores/ai.js";
+import { loadCollectSpeed } from "@/stores/collect.js";
 import { initWorker, loadLastModel } from "@/stores/train.js";
 import { loadInstalls } from "@/stores/install.js";
 import StartView from "@/views/StartView.vue";
@@ -49,7 +50,7 @@ onMounted(async () => {
   app.onDevice = d.ok;
   app.deviceText = d.ok ? t("device {host} · {status}", { host: location.host, status: d.status }) : t("not on a device");
   if (d.ok) dev.readConfig().catch(() => "").then(dev.meterName).then((name) => { if (name) app.meterName = name; });
-  await loadAiSettings();
+  await Promise.all([loadAiSettings(), loadCollectSpeed()]);
   await loadLastModel();
   await Promise.all([refreshSetup(), refreshProject()]);
   loadInstalls();

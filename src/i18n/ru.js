@@ -137,6 +137,7 @@ export default {
   "new images to download": "новых изображений к загрузке",
   "about {time}": "около {time}",
   "at about {n} images/s": "при ~{n} изобр./с",
+  "at {n} images/s, the average of the last download here": "при {n} изобр./с, средняя за прошлую загрузку",
   "images in {n} new hour folders on the device": "изображений на устройстве (новых часовых папок: {n})",
   "skipped: enough images of that reading already": "пропущено: изображений с этим значением уже достаточно",
   "already here": "уже в браузере",

@@ -115,11 +115,12 @@ export async function scan({ days = 7, quota = 100, have = new Map(), shouldStop
 
 /**
  * Step 2: download what scan() chose. onProgress({fetched, failed, total, rate, folder}),
- * rate = images per second over the last seconds.
+ * rate = images per second over the last seconds. The result adds seconds: the wall time of the whole run.
  */
 export async function download(plan, { shouldStop = () => false, onProgress = () => {} } = {}) {
   const doneHours = await kvGet("collectedHours", {});
-  const stats = { fetched: 0, failed: 0, total: plan.toFetch, folders: 0, rate: 0 };
+  const stats = { fetched: 0, failed: 0, total: plan.toFetch, folders: 0, rate: 0, seconds: 0 };
+  const t0 = performance.now();
   const speed = rollingRate();
   speed.mark(0);
   for (const h of plan.hours) {
@@ -145,5 +146,6 @@ export async function download(plan, { shouldStop = () => false, onProgress = ()
     if (!left && !shouldStop() && !h.live) { doneHours[h.key] = h.items.length || 1; await kvSet("collectedHours", doneHours); }
     stats.folders++;
   }
+  stats.seconds = (performance.now() - t0) / 1000;
   return stats;
 }
