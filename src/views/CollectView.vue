@@ -4,7 +4,7 @@ import { computed, ref } from "vue";
 import { t } from "@/i18n/index.js";
 import { HINT } from "@/i18n/hints.js";
 import { app, runTask, requestStop } from "@/stores/app.js";
-import { collect, FILES_PER_S, filesPerSec, runScan, runDownload, perWheel, importZip, clearAll } from "@/stores/collect.js";
+import { collect, FILES_PER_S, filesPerSec, runScan, runDownload, runCollect, perWheel, importZip, clearAll } from "@/stores/collect.js";
 import { train } from "@/stores/train.js";
 import { exportCsv, exportZip } from "@/stores/datasetExport.js";
 import { saveToDevice, loadFromDevice } from "@/stores/deviceState.js";
@@ -17,10 +17,15 @@ import BaseHintTh from "@/components/BaseHintTh.vue";
 const plan = computed(() => collect.plan);
 const wheels = computed(() => (plan.value ? perWheel(plan.value, collect.quota) : []));
 const collecting = computed(() => app.task === "checking the device" || app.task === "collect");
-const fileInput = ref(null), confirmClear = ref(false);
+const fileInput = ref(null), confirmClear = ref(false), scanMenu = ref(null);
 
 const scan = () => runTask("checking the device", "collect", runScan, (err) => t("Checking failed: {err}", { err }));
 const download = () => runTask("collect", "collect", runDownload, (err) => t("Collecting failed: {err}", { err }));
+/** Menu item: check, then download what the check chose, in one task. */
+function checkAndDownload() {
+  scanMenu.value.open = false;
+  return runTask("collect", "collect", runCollect, (err) => t("Collecting failed: {err}", { err }));
+}
 async function onFile(e) {
   const f = e.target.files[0];
   if (f) await runTask("import", "collect", () => importZip(f), (err) => t("Import failed: {err}", { err }));
@@ -39,7 +44,13 @@ async function clear() {
   <div class="row">
     <label class="f" for="days" :data-hint="HINT.daysBack">{{ t("Days back") }} <input id="days" v-model.number="collect.days" type="number" min="1" max="60"></label>
     <label class="f" for="quota" :data-hint="HINT.perReading">{{ t("Images per reading") }} <input id="quota" v-model.number="collect.quota" type="number" min="10" max="2000" step="10"></label>
-    <button id="btnScan" :disabled="!!app.busy" @click="scan">{{ t("Check for new images") }}</button>
+    <span class="split">
+      <button id="btnScan" :disabled="!!app.busy" @click="scan">{{ t("Check for new images") }}</button>
+      <details ref="scanMenu" class="menu" :disabled="!!app.busy || null">
+        <summary :aria-label="t('More ways to check')">▾</summary>
+        <div><button id="btnCheckDownload" class="link" type="button" :disabled="!!app.busy" @click="checkAndDownload">{{ t("Check and download") }}</button></div>
+      </details>
+    </span>
     <button id="btnCollect" class="primary" :disabled="!!app.busy || !plan?.toFetch" @click="download">
       {{ !plan ? t("Download") : plan.toFetch ? t("Download {n} images", { n: num(plan.toFetch) }) : t("Nothing new to download") }}
     </button>

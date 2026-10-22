@@ -19,6 +19,29 @@ export default {
   "backend …": "вычислитель …",
   "device {host} · {status}": "устройство {host} · {status}",
   "not on a device": "не на устройстве",
+  "How the device was detected: click for details": "Как определялось устройство: нажмите, чтобы узнать",
+  "Open the device’s own pages (leaves the trainer)": "Открыть страницы самого устройства (выход из тренера)",
+  "Device check": "Проверка устройства",
+  "Why “not on a device”": "Почему «не на устройстве»",
+  "Not checked yet.": "Ещё не проверялось.",
+  "Page address: {url}": "Адрес страницы: {url}",
+  "Asked: {url} ({n} of {tries} attempts, {s} s each)": "Запрос: {url} (попыток: {n} из {tries}, по {s} с)",
+  "Answered in {ms} ms: {status}": "Ответ за {ms} мс: {status}",
+  "The page was opened as a local file, not from the device. Upload trainer.html.gz to /html/ on the device and open http://<device>/trainer.html.":
+    "Страница открыта как локальный файл, а не с устройства. Загрузите trainer.html.gz в /html/ на устройстве и откройте http://<устройство>/trainer.html.",
+  "No answer within {s} s. The device may be busy with a reading round or restarting; check again in a minute. If http://{host}/ does not open either, the device's web server is hung (the browser keeps this page for 12 h, so it opens even then): power-cycle the device.":
+    "Нет ответа за {s} с. Устройство может быть занято считыванием или перезагружается; проверьте снова через минуту. Если http://{host}/ тоже не открывается, веб-сервер устройства завис (браузер хранит эту страницу 12 ч, поэтому она открывается и тогда): выключите и включите устройство.",
+  "The server answered HTTP {code} after {ms} ms: {err}": "Сервер ответил HTTP {code} за {ms} мс: {err}",
+  "It has no /statusflow: not an AI-on-the-edge device, or its firmware is too old.": "У него нет /statusflow: это не устройство AI-on-the-edge, либо прошивка слишком старая.",
+  "The request failed after {ms} ms: {err}. The page was not served by the device (another host or port), or the connection to it dropped.":
+    "Запрос не удался за {ms} мс: {err}. Страница открыта не с устройства (другой хост или порт), либо соединение с ним оборвалось.",
+  "The answer was a web page, not a status line: this server is not an AI-on-the-edge device.":
+    "В ответ пришла веб-страница, а не строка статуса: этот сервер — не устройство AI-on-the-edge.",
+  "Checked at {time} · {ua}": "Проверено в {time} · {ua}",
+  "Check again": "Проверить снова",
+  "Copy to clipboard": "Скопировать",
+  "Copied": "Скопировано",
+  "Copy failed": "Не удалось скопировать",
   "CPU only: training will be slow": "только процессор: обучение будет медленным",
   "Show": "Показать",
   "Work continues while this tab is in the background; progress shows in the tab title. Keep the tab open and the computer awake.":
@@ -119,6 +142,8 @@ export default {
   "Days back": "Период, дней",
   "Images per reading": "Изображений на значение",
   "Check for new images": "Найти новые изображения",
+  "More ways to check": "Ещё варианты поиска",
+  "Check and download": "Найти и загрузить",
   "Download": "Загрузить",
   "Download {n} images": "Загрузить ({n})",
   "Nothing new to download": "Новых изображений нет",

@@ -47,10 +47,14 @@ const haveByGroup = () => new Map([...cropsByGroup()].map(([g, cs]) => [g, cs.ma
 export async function runScan() {
   if (!app.onDevice) { say("collect", t("Collecting needs the page to be opened from the device."), true); return null; }
   say("collect", t("Listing the device's image folders…"));
+  let t0 = 0; // when the hour folders started listing: the ETA is the average so far
   const plan = await scan({
     days: collect.days || 7, quota: collect.quota || 100, have: haveByGroup(), shouldStop: () => app.stop,
     onProgress: (p) => {
-      say("collect", t("Listing folder {i} of {n} ({folder})…", { i: p.listed + 1, n: p.total, folder: p.folder }));
+      t0 ||= performance.now();
+      const secPer = p.listed ? (performance.now() - t0) / 1000 / p.listed : 0;
+      const eta = p.listed >= 2 ? " · " + t("about {time} left", { time: fmtTime((p.total - p.listed) * secPer) }) : "";
+      say("collect", t("Listing folder {i} of {n} ({folder})…", { i: p.listed + 1, n: p.total, folder: p.folder }) + eta);
       collect.bar = p.listed / Math.max(1, p.total);
       app.progress = t("checking {i}/{n}", { i: p.listed, n: p.total });
     },

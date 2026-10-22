@@ -16,7 +16,9 @@ access. No firmware changes are needed.
 1. Download `trainer.html.gz` from the [latest release](../../releases/latest).
 2. In the device's file manager, upload it to `/html/`.
 3. Open `http://<device>/trainer.html`. The firmware caches the page for 12 h, so reload
-   hard (Ctrl+F5) after updating it.
+   hard (Ctrl+F5) after updating it. The header badge says whether the page found the
+   device; if it reads "not on a device", click it to see what was asked and what came back
+   (the page asks `/statusflow` up to three times, 8 s each), and to check again.
 
 Training runs on the GPU (WebGL): use a desktop browser. Labelling also works on a phone
 (see "Save to the device" below). Collecting needs a few days of digit images saved by the
@@ -30,7 +32,7 @@ A wizard: Start (overview, automatic run) and five steps, each reachable at any 
    (`ROIImagesLocation`) and kept long enough (`ROIImagesRetention`). One click fixes it:
    the config is backed up to `/config/config_<ts>.ini.bak`, pushed right after a reading
    round (MD5-checked) and the device restarts.
-2. **Collect:** first a scan lists the new `/log/digit/<day>/<hour>/` folders and shows how many images there are to download and how long it takes; then crops go into IndexedDB. The device's
+2. **Collect:** first a scan lists the new `/log/digit/<day>/<hour>/` folders (with a time estimate while it runs) and shows how many images there are to download and how long it takes; then crops go into IndexedDB ("Check and download" in the button's menu does both in one go). The device's
    reading is in each file name; crops are grouped by wheel + reading (digit, between two
    digits, rejected) and each group keeps "images per reading" (default 100) spread evenly
    over the hours it was seen, old and new days, day and night: a later collect fetches only

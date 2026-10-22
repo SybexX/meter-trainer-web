@@ -33,14 +33,34 @@ async function req(path, opts = {}, timeoutMs = 30000) {
 export const getText = (path, timeout) => queued(async () => (await req(path, {}, timeout)).text());
 export const getBytes = (path, timeout) => queued(async () => new Uint8Array(await (await req(path, {}, timeout)).arrayBuffer()));
 
-/** Is this page served by an AI-on-the-edge device? */
-export async function detect() {
-  try {
-    const s = await getText("/statusflow", 8000);
-    return { ok: true, status: s.trim() };
-  } catch {
-    return { ok: false };
+/**
+ * Is this page served by an AI-on-the-edge device? Asks /statusflow (same origin), up to
+ * `tries` times when it times out or the connection fails: the ESP32 answers late while a
+ * reading round keeps it busy. Returns {ok, status, diag}; diag says what was asked and what
+ * came back, for the "why not on a device" panel.
+ */
+export async function detect(timeoutMs = 8000, tries = 3) {
+  const diag = { page: location.href, url: `${location.origin}/statusflow`, timeoutMs, tries, attempts: 0, at: new Date().toLocaleTimeString() };
+  if (location.protocol === "file:") return { ok: false, diag: { ...diag, reason: "file" } };
+  for (let i = 0; i < tries; i++) {
+    const t0 = performance.now();
+    diag.attempts = i + 1;
+    try {
+      const s = await getText("/statusflow", timeoutMs);
+      diag.ms = Math.round(performance.now() - t0);
+      diag.body = s.trim().slice(0, 120);
+      // the device answers one line of text; a web page means some other server is here
+      if (/<html|<!doctype/i.test(s)) return { ok: false, diag: { ...diag, reason: "html" } };
+      return { ok: true, status: s.trim(), diag: { ...diag, reason: "ok" } };
+    } catch (e) {
+      diag.ms = Math.round(performance.now() - t0);
+      diag.error = e.message || String(e);
+      if (e.status) return { ok: false, diag: { ...diag, reason: "http", httpStatus: e.status } };
+      diag.reason = e.name === "AbortError" ? "timeout" : "network";
+      if (i < tries - 1) await new Promise((r) => setTimeout(r, 2000));
+    }
   }
+  return { ok: false, diag };
 }
 
 /** Directory listing of /fileserver/<path>/ -> [{name, href, dir, size}] */

@@ -12,6 +12,8 @@ export const app = reactive({
   step: "start",
   onDevice: false,
   deviceText: t("device …"),
+  deviceDiag: null,   // how the device was detected (services/device.js detect)
+  showDiag: false,    // the panel under the header that explains the device badge
   backendText: t("backend …"),
   meterName: "",
   // the running task: its translated name, where its messages go, and the stop request
