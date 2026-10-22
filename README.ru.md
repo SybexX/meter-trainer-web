@@ -99,7 +99,7 @@ GitHub Actions собирает каждый push и pull request (артефа�
 с `trainer.html.gz` и `trainer.html`:
 
 ```bash
-npm version 0.7.2      # меняет package.json, делает коммит и тег v0.7.2
+npm version 0.7.3      # меняет package.json, делает коммит и тег v0.7.3
 git push --follow-tags
 ```
 
